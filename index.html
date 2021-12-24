@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" />
+  <title>Quick Editor</title>
+  <meta charset="utf-8" />
+  <script src="https://code.jquery.com/jquery-3.1.1.min.js"
+    integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js" defer></script>
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
+</head>
+
+<body>
+
+  <!-- MENU -->
+  <header class="overlay">
+    <div class="ui menu container">
+      <div class="header item">
+        GS Quick Editor
+      </div>
+      <a class="item">
+        Home
+      </a>
+      <a class="item active">
+        Listar dados
+      </a>
+      <a class="item">
+        Template
+      </a>
+      <div class="right menu">
+        <a class="item">
+          Modo de usar
+        </a>
+        <div class="item top-menu">
+          <button class="ui compact button negative" id="menu-btn-cancel">
+            <i class="times circle outline icon"></i>
+            Cancelar
+          </button>
+        </div>
+        <!-- <div class="item top-menu">
+               <button class="ui compact button primary" id="menu-btn-back">
+                 <i class="arrow circle left icon"></i>
+                 Voltar
+               </button>
+             </div> -->
+        <div class="item top-menu">
+          <button class="ui compact button positive" id="menu-btn-save">
+            <i class="save icon"></i>
+            Salvar
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main id="root" class="ui container segment">
+
+    <!--  LOADING PLACEHOLDER -->
+    <div class="ui placeholder">
+      <div class="full line"></div>
+      <div class="full line"></div>
+      <div class="full line"></div>
+      <div class="full line"></div>
+      <div class="full line"></div>
+    </div>
+
+    <!-- LISTAR DADOS -->
+    <div class="ui middle aligned divided list" id="list-data"></div>
+
+    <!-- MOSTRAR DADOS -->
+    <div class="ui form display-none" id="form-data"></div>
+
+    <!-- <div class="ui content"></div> -->
+
+  </main>
+
+  <!-- ERROR MESSAGE -->
+  <pre id="error"></pre>
+
+  <footer class="ui segment"><em>Alan Fernandes / Dezembro - 2021</em></footer>
+
+  <script async defer src="https://apis.google.com/js/api.js">
+</script>
+</body>
+
+</html>
