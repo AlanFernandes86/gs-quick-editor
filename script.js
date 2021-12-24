@@ -2,8 +2,11 @@ const topMenuButton = document.getElementById('top-menu-btn');
 const placeholder = document.querySelector('.ui.placeholder');
 const listData = document.getElementById('list-data');
 const root = document.getElementById('root');
+const pre = document.getElementById('error');
 const menuBtnCancel = document.getElementById('menu-btn-cancel');
 const menuBtnSave = document.getElementById('menu-btn-save');
+const menuBtnSignIn = document.getElementById('menu-btn-sign-in');
+const menuBtnSignOut = document.getElementById('menu-btn-sign-out');
 const formData = document.getElementById('form-data');
 
 const regNumbers = /[0-9]+/g;
@@ -14,22 +17,22 @@ let tempObject = {};
 
 menuBtnCancel.onclick = toggleFormOrList;
 menuBtnSave.onclick = saveData;
+menuBtnSignIn.onclick = handleSignInClick;
+menuBtnSignOut.onclick = handleSignOutClick;
 
 window.onload = () => {
-  /**
-  *  On load, called to load the auth2 library and API client library.
-  */
   handleClientLoad();
-  function handleClientLoad() {
-    gapi.load('client:auth2', initClient);
-  }
+}
 
-  $('.top-menu').css('display', 'none');
+window.onreadystatechange = () => {
+  if (this.readyState === 'complete') this.onload();
+}
 
+function handleClientLoad() {
+  gapi.load('client:auth2', initClient);
 }
 
 function appendPre(message) {
-  const pre = document.getElementById('error');
   const textContent = document.createTextNode(message + '\n');
   pre.appendChild(textContent);
 }
@@ -45,7 +48,7 @@ function initClient() {
   const CLIENT_ID = '1074659725945-evslt5efu5blhquu7404fr95op7jv7ua.apps.googleusercontent.com';
   
   placeholder.style.display = 'block';
-
+  
   gapi.client.init({
     apiKey: API_KEY,
     clientId: CLIENT_ID,
@@ -60,9 +63,24 @@ function initClient() {
 }
 
 function updateSignInStatus(isSignedIn) {
+  toggleBtnSignInOrOut(isSignedIn);
   if (isSignedIn) {
-    console.log('updateSignIn');
-    // listAll();
+    pre.innerHTML = '';
+    listAll();
+  } else {
+    appendPre('Você não está autenticado! Favor clicar no botão "Sign In" no menu superior.\n'
+    + 'Importante desabilitar o bloqueador de popup.');
+    placeholder.display = 'none';
+  }
+}
+
+function toggleBtnSignInOrOut(isSignedIn) {
+  if(isSignedIn) {
+    menuBtnSignIn.classList.add('display-none');
+    menuBtnSignOut.classList.remove('display-none');
+  } else {
+    menuBtnSignIn.classList.remove('display-none');
+    menuBtnSignOut.classList.add('display-none');
   }
 }
 
@@ -72,6 +90,7 @@ function handleSignInClick(event) {
 
 function handleSignOutClick(event) {
   gapi.auth2.getAuthInstance().signOut();
+  document.location.reload();
 }
 
 
@@ -106,33 +125,22 @@ async function getAll() {
 }
 
 async function putObject() {
-
-  placeholder.style.display = 'block';
-
   return new Promise((resolve, reject) => {
     const params = {
-      // The ID of the spreadsheet to update.
       spreadsheetId: '1I9RpIdtTyOvFZ5WPU4KYqzux4XmPotF2lkfLpQY-tnE',  // TODO: Update placeholder value.
-
-      // The A1 notation of the values to update.
-      range: 'A10:C',  // TODO: Update placeholder value.
-
-      // How the input data should be interpreted.
-      valueInputOption: 'RAW',  // TODO: Update placeholder value.
-
+      range: 'A10:AD',
+      valueInputOption: 'RAW', 
       includeValuesInResponse: true,
     }
 
     const valueRangeBody = {
-      // TODO: Add desired properties to the request body. All existing properties
-      // will be replaced.
       values: [
         Object.values(tempObject),
       ],
       majorDimension: 'ROWS',
     };
     gapi.client.sheets.spreadsheets.values.update(params, valueRangeBody).then(function (response) {
-      console.dir(response.result);
+      resolve(response);
     }, function (response) {
       appendPre('Error: ' + response.result.error.message);
     });
@@ -205,12 +213,13 @@ function addBtnShow(divItem, index) {
 
 function showData(event) {
   const id = event.target.id.match(regNumbers)[0];
+  console.log(id);
   tempObject = Object.assign({}, objects[id]);
   Object.entries(tempObject).forEach((item) => {
     createInput(id, 'text', item);
   });
+  placeholder.style.display = 'none';
   toggleFormOrList();
-  $('.top-menu').css('display', 'flex');
 }
 
 function createInput(objId, type, entries) {
@@ -235,13 +244,14 @@ function updateValue(event) {
   // const index = event.target.id.match(rBeforeHyphen)[0];
   const key = event.target.id.match(regAfterHyphen)[0];
   tempObject[key] = event.target.value;
-
 }
 
 function toggleFormOrList() {
+  menuBtnCancel.classList.toggle('display-none');
+  menuBtnSave.classList.toggle('display-none');
+
   if (listData.classList.contains('display-none')) {
     listData.classList.remove('display-none');
-    $('.top-menu').css('display', 'none');
   } else {
     listData.classList.add('display-none');
   }
@@ -256,8 +266,10 @@ function toggleFormOrList() {
 }
 
 async function saveData(event) {
-  await putObject();
+  placeholder.style.display = 'block';
+  const response = await putObject();
   placeholder.style.display = 'none';
+  console.log(response.status);
 }
 
 function enableFixedMenu() {
