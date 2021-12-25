@@ -8,6 +8,7 @@ const menuBtnSave = document.getElementById('menu-btn-save');
 const menuBtnSignIn = document.getElementById('menu-btn-sign-in');
 const menuBtnSignOut = document.getElementById('menu-btn-sign-out');
 const formData = document.getElementById('form-data');
+const menuContainer = document.querySelector('.ui.menu.container');
 
 const regNumbers = /[0-9]+/g;
 const regBeforeHyphen = /[^\-]*/;
@@ -19,6 +20,7 @@ menuBtnCancel.onclick = toggleFormOrList;
 menuBtnSave.onclick = saveData;
 menuBtnSignIn.onclick = handleSignInClick;
 menuBtnSignOut.onclick = handleSignOutClick;
+menuContainer.onclick = toggleMenuItem;
 
 window.onload = () => {
   handleClientLoad();
@@ -26,6 +28,26 @@ window.onload = () => {
 
 window.onreadystatechange = () => {
   if (this.readyState === 'complete') this.onload();
+}
+
+function toggleMenuItem(event) {
+  const id = event.target.id;
+  activeMenuItem(id);
+  toggleRootVisualization(id);
+}
+
+function activeMenuItem(id) {
+  const menuItems = document.querySelectorAll('a.item');
+  new Array(...menuItems).every((element) => {
+    console.dir(element);
+    if (element.id === id && element.classList.contains('active')) return false;
+    element.id === id ? element.classList.add('active') : element.classList.remove('active');
+    return true;
+  });
+}
+
+function toggleRootVisualization(id) {
+  
 }
 
 function handleClientLoad() {
@@ -249,6 +271,7 @@ function updateValue(event) {
 function toggleFormOrList() {
   menuBtnCancel.classList.toggle('display-none');
   menuBtnSave.classList.toggle('display-none');
+  menuBtnSignOut.classList.toggle('display-none');
 
   if (listData.classList.contains('display-none')) {
     listData.classList.remove('display-none');

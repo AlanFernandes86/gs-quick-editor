@@ -21,17 +21,17 @@
       <div class="header item">
         GS Quick Editor
       </div>
-      <a class="item">
+      <a class="item active" id="menu-item-home">
         Home
       </a>
-      <a class="item active">
+      <a class="item" id="menu-item-list-data">
         Listar dados
       </a>
-      <a class="item">
+      <a class="item" id="menu-item-template">
         Template
       </a>
       <div class="right menu">
-        <a class="item">
+        <a class="item" id="menu-item-how-to-use">
           Modo de usar
         </a>
         <div class="item top-menu display-none" id="menu-btn-cancel">
@@ -47,19 +47,19 @@
                </button>
              </div> -->
         <div class="item top-menu display-none" id="menu-btn-save">
-          <button class="ui compact button positive" >
+          <button class="ui compact button positive">
             <i class="save icon"></i>
             Salvar
           </button>
         </div>
         <div class="item top-menu display-none" id="menu-btn-sign-in">
-          <button class="ui compact button primary" >
+          <button class="ui compact button primary">
             <i class="sign-in icon"></i>
             Sign In
           </button>
         </div>
         <div class="item top-menu display-none" id="menu-btn-sign-out">
-          <button class="ui compact button secondary" >
+          <button class="ui compact button secondary">
             <i class="sign-out icon"></i>
             Sign Out
           </button>
@@ -79,13 +79,16 @@
       <div class="full line"></div>
     </div>
 
+    <!-- HOME -->
+    <div class="ui content" id="home">
+      <input type="text" name="spreadsheet-id" id="spreadsheet-id">
+    </div>
+
     <!-- LISTAR DADOS -->
-    <div class="ui middle aligned divided list" id="list-data"></div>
+    <div class="ui middle aligned divided list display-none" id="list-data"></div>
 
     <!-- MOSTRAR DADOS -->
     <div class="ui form display-none" id="form-data"></div>
-
-    <!-- <div class="ui content"></div> -->
 
   </main>
 
@@ -94,7 +97,7 @@
 
   <footer class="ui segment"><em>Alan Fernandes / Dezembro - 2021</em></footer>
 
-</script>
+  </script>
 </body>
 
 </html>
