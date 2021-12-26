@@ -19,6 +19,7 @@
   <header class="overlay">
     <div class="ui menu container">
       <div class="header item">
+        <i class="notched circle loading icon display-none" id="loading"></i>
         GS Quick Editor
       </div>
       <a class="item active" id="menu-item-home">
@@ -69,26 +70,20 @@
   </header>
 
   <main id="root" class="ui container segment">
-
-    <!--  LOADING PLACEHOLDER -->
-    <div class="ui placeholder">
-      <div class="full line"></div>
-      <div class="full line"></div>
-      <div class="full line"></div>
-      <div class="full line"></div>
-      <div class="full line"></div>
-    </div>
-
     <!-- HOME -->
-    <div class="ui content" id="home">
-      <input type="text" name="spreadsheet-id" id="spreadsheet-id">
-    </div>
+    <div class="ui" id="home">HOME</div>
 
     <!-- LISTAR DADOS -->
-    <div class="ui middle aligned divided list display-none" id="list-data"></div>
+    <div class="ui middle aligned divided list display-none" id="list-data">LISTA</div>
 
     <!-- MOSTRAR DADOS -->
-    <div class="ui form display-none" id="form-data"></div>
+    <div class="ui form display-none" id="form-data">FORM</div>
+
+    <!-- TEMPLATE -->
+    <div class="ui display-none" id="template">TEMPLATE</div>
+
+    <!-- MODO DE USAR -->
+    <div class="ui display-none" id="how-to-use">MODO DE USAR</div>
 
   </main>
 

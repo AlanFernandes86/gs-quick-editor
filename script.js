@@ -1,18 +1,21 @@
-const topMenuButton = document.getElementById('top-menu-btn');
-const placeholder = document.querySelector('.ui.placeholder');
-const listData = document.getElementById('list-data');
+const menuContainer = document.querySelector('.ui.menu.container');
 const root = document.getElementById('root');
+const home = document.getElementById('home');
+const listData = document.getElementById('list-data');
+const formData = document.getElementById('form-data');
+const template = document.getElementById('template');
+const howToUse = document.getElementById('how-to-use');
 const pre = document.getElementById('error');
+
 const menuBtnCancel = document.getElementById('menu-btn-cancel');
 const menuBtnSave = document.getElementById('menu-btn-save');
 const menuBtnSignIn = document.getElementById('menu-btn-sign-in');
 const menuBtnSignOut = document.getElementById('menu-btn-sign-out');
-const formData = document.getElementById('form-data');
-const menuContainer = document.querySelector('.ui.menu.container');
 
 const regNumbers = /[0-9]+/g;
 const regBeforeHyphen = /[^\-]*/;
 const regAfterHyphen = /[a-zA-Zà-úÀ-Ú0-9º \.]+$/g;
+
 let objects = [];
 let tempObject = {};
 
@@ -26,28 +29,169 @@ window.onload = () => {
   handleClientLoad();
 }
 
-window.onreadystatechange = () => {
+/* // NÃO SEI EXATAMENTE O QUE FAZ, NÃO USAR POR ENQUANTO.
+ window.onreadystatechange = () => {
   if (this.readyState === 'complete') this.onload();
+} */
+
+function loadHome() {
+  $('#home').load('home.html', () => {
+    let isExistingSheet = false;
+
+    class HomeStep {
+      constructor(element, bottomStep, ...actions) {
+        this.element = element;
+        this.bottomStep = bottomStep;
+        this.actions = actions;
+      }
+    }
+    const homeSteps = [
+      new HomeStep(document.getElementById('segment-0'), 0, newSheet, existingSheet),
+      new HomeStep(document.getElementById('segment-1'), 1, createSheet),
+      new HomeStep(document.getElementById('segment-2'), 1, connectSheet),
+      new HomeStep(document.getElementById('segment-3'), 2, setMainColumn, testSheetConnection),
+      new HomeStep(document.getElementById('segment-4'), 3),
+    ];
+
+    const navigation = {
+      startToCreateSheet : [ 0, 1 ], 
+      startToExistingSheet : [0, 2],
+      createSheetToMainColumn : [ 1, 3 ],
+      existingSheetToMainColumn : [ 2, 3 ],
+      mainColumnToFinished : [ 3, 4 ],
+    }
+
+    homeSteps.forEach((step, index) => {
+      setActions(index);
+    })
+
+    document.querySelectorAll('.step').forEach((step) => {
+      step.onclick = bottomStepsToggle;
+    })
+    
+    function bottomStepsToggle(event) {
+      const segments = document.querySelectorAll('.ui.attached.segment');
+      const from = +Array(...segments)
+                    .find((segment) => !segment.classList.contains('display-none'))
+                    .id.match(regAfterHyphen)[0];
+      console.log(from);
+      let to = +event.currentTarget.id.match(regAfterHyphen)[0];
+
+      if (to === 1 && isExistingSheet) { 
+        to = 2 
+      } else if (to > 1) {
+        to += 1;
+      }
+            
+      console.log(to);
+      toggleSteps(from, to);
+    }
+
+    function setActions(step) {
+      const homeStep = homeSteps[step];
+      homeStep.actions.forEach((action, index) => {
+        document.getElementById(`btn-${step}-${index}`).onclick = action;
+      }); 
+    }
+
+    function toggleSteps(from, to) {
+      homeSteps[from].element.classList.add('display-none');
+      homeSteps[to].element.classList.remove('display-none');
+      from = homeSteps[from].bottomStep;
+      to = homeSteps[to].bottomStep;
+      setActiveBottomStep(from, to);
+      if (from > to) {
+        while (from > to) {
+          setDisabledBottomStep(from, false);
+          from -= 1;
+        }
+      } else {
+        setDisabledBottomStep(to, true);
+      }      
+    }
+
+    function setDisabledBottomStep(position, enabled) {
+      const bottomStep = document.getElementById(`step-${position}`);
+      enabled 
+      ? bottomStep.classList.remove('disabled')
+      : bottomStep.classList.add('disabled');
+    }
+
+    function setActiveBottomStep(from, to) {
+      document.getElementById(`step-${from}`).classList.remove('active');
+      document.getElementById(`step-${to}`).classList.add('active');
+    }
+
+    function newSheet() {
+      toggleSteps(...navigation.startToCreateSheet);
+      isExistingSheet = false;
+    }
+
+    function existingSheet() {
+      toggleSteps(...navigation.startToExistingSheet);
+      isExistingSheet = true;
+    }
+
+    function createSheet() {
+      toggleSteps(...navigation.createSheetToMainColumn);
+    }
+
+    function connectSheet() {
+      toggleSteps(...navigation.existingSheetToMainColumn);
+    }
+
+    function setMainColumn() {
+      
+    }
+
+    function testSheetConnection() {
+      toggleSteps(...navigation.mainColumnToFinished);
+    }
+
+
+  });
 }
 
 function toggleMenuItem(event) {
   const id = event.target.id;
   activeMenuItem(id);
-  toggleRootVisualization(id);
+  updateRoot(id);
 }
 
 function activeMenuItem(id) {
   const menuItems = document.querySelectorAll('a.item');
   new Array(...menuItems).every((element) => {
-    console.dir(element);
     if (element.id === id && element.classList.contains('active')) return false;
     element.id === id ? element.classList.add('active') : element.classList.remove('active');
     return true;
   });
 }
 
-function toggleRootVisualization(id) {
-  
+function updateRoot(id) {
+  switch (id) {
+    case 'menu-item-home':
+      toggleRootChildrenDisplay(home.id);
+      break;
+    case 'menu-item-list-data':
+      toggleRootChildrenDisplay(listData.id);
+      listAll();
+      break;
+    case 'menu-item-template':
+      toggleRootChildrenDisplay(template.id);
+      break;
+    case 'menu-item-how-to-use':
+      toggleRootChildrenDisplay(howToUse.id);
+      break;
+  }
+}
+
+function toggleRootChildrenDisplay(id) {
+  const rootDiv = root.children;
+  new Array(...rootDiv).every((element) => {
+    if (element.id === id && !element.classList.contains('display-none')) return false;
+    element.id === id ? element.classList.remove('display-none') : element.classList.add('display-none');
+    return true;
+  });
 }
 
 function handleClientLoad() {
@@ -68,9 +212,7 @@ function initClient() {
   const DISCOVERY_DOCS = ['https://sheets.googleapis.com/$discovery/rest?version=v4'];
   const SCOPES = 'https://www.googleapis.com/auth/spreadsheets';
   const CLIENT_ID = '1074659725945-evslt5efu5blhquu7404fr95op7jv7ua.apps.googleusercontent.com';
-  
-  placeholder.style.display = 'block';
-  
+
   gapi.client.init({
     apiKey: API_KEY,
     clientId: CLIENT_ID,
@@ -88,18 +230,19 @@ function updateSignInStatus(isSignedIn) {
   toggleBtnSignInOrOut(isSignedIn);
   if (isSignedIn) {
     pre.innerHTML = '';
-    listAll();
+    root.classList.remove('display-none');
   } else {
+    root.classList.add('display-none');
     appendPre('Você não está autenticado! Favor clicar no botão "Sign In" no menu superior.\n'
-    + 'Importante desabilitar o bloqueador de popup.');
-    placeholder.display = 'none';
+      + 'Importante desabilitar o bloqueador de popup.');
   }
 }
 
 function toggleBtnSignInOrOut(isSignedIn) {
-  if(isSignedIn) {
+  if (isSignedIn) {
     menuBtnSignIn.classList.add('display-none');
     menuBtnSignOut.classList.remove('display-none');
+    loadHome();
   } else {
     menuBtnSignIn.classList.remove('display-none');
     menuBtnSignOut.classList.add('display-none');
@@ -117,14 +260,16 @@ function handleSignOutClick(event) {
 
 
 async function listAll() {
+  isLoading(true);
   getAll()
     .then((response) => {
-      placeholder.style.display = 'none';
       objects = response;
       listNames(response);
+      isLoading(false);
     })
     .catch((error) => {
       error.message;
+      isLoading(false);
     })
 }
 
@@ -146,29 +291,6 @@ async function getAll() {
   });
 }
 
-async function putObject() {
-  return new Promise((resolve, reject) => {
-    const params = {
-      spreadsheetId: '1I9RpIdtTyOvFZ5WPU4KYqzux4XmPotF2lkfLpQY-tnE',  // TODO: Update placeholder value.
-      range: 'A10:AD',
-      valueInputOption: 'RAW', 
-      includeValuesInResponse: true,
-    }
-
-    const valueRangeBody = {
-      values: [
-        Object.values(tempObject),
-      ],
-      majorDimension: 'ROWS',
-    };
-    gapi.client.sheets.spreadsheets.values.update(params, valueRangeBody).then(function (response) {
-      resolve(response);
-    }, function (response) {
-      appendPre('Error: ' + response.result.error.message);
-    });
-  });
-}
-
 function arrayToObject(rows) {
   const rowsObject = [];
 
@@ -178,7 +300,6 @@ function arrayToObject(rows) {
     row.forEach((value, i) => {
       object[array[0][i]] = value;
     })
-    object.id = index;
     rowsObject.push(object)
   });
   return rowsObject;
@@ -186,6 +307,7 @@ function arrayToObject(rows) {
 
 function listNames(rowsObject) {
   const list = document.getElementById('list-data');
+  list.innerHTML = ''
   rowsObject.forEach((value, index) => {
     const divItem = document.createElement('div');
     divItem.classList.add('item');
@@ -240,7 +362,6 @@ function showData(event) {
   Object.entries(tempObject).forEach((item) => {
     createInput(id, 'text', item);
   });
-  placeholder.style.display = 'none';
   toggleFormOrList();
 }
 
@@ -288,10 +409,31 @@ function toggleFormOrList() {
   }
 }
 
+async function putObject() {
+  return new Promise((resolve, reject) => {
+    const params = {
+      spreadsheetId: '1I9RpIdtTyOvFZ5WPU4KYqzux4XmPotF2lkfLpQY-tnE',
+      range: 'A10:AD',
+      valueInputOption: 'RAW',
+      includeValuesInResponse: true,
+    }
+
+    const valueRangeBody = {
+      values: [
+        Object.values(tempObject),
+      ],
+      majorDimension: 'ROWS',
+    };
+    gapi.client.sheets.spreadsheets.values.update(params, valueRangeBody).then(function (response) {
+      resolve(response);
+    }, function (response) {
+      appendPre('Error: ' + response.result.error.message);
+    });
+  });
+}
+
 async function saveData(event) {
-  placeholder.style.display = 'block';
   const response = await putObject();
-  placeholder.style.display = 'none';
   console.log(response.status);
 }
 
@@ -324,5 +466,11 @@ function disableFixedMenu() {
       observeChanges: false,
     })
 }
+
+function isLoading(enabled) {
+  const loading = document.getElementById('loading');
+  enabled ? loading.classList.remove('display-none') : loading.classList.add('display-none');
+}
+
 
 
