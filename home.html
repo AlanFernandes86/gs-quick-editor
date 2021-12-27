@@ -7,20 +7,27 @@
   </div>
 </div>
 <div class="ui attached segment display-none" id="segment-1">
-  NOVA
-  <button class="ui button primary" id="btn-1-0">Criar planilha</button>
+  <div id="btn-group-segment-1">
+    <div class="ui action input" id="create-new-sheet">
+      <input type="text" name="new-sheet-title" id="new-sheet-title" placeholder="Título da planilha">
+      <button class="ui button primary" id="btn-1-0">Criar planilha</button>
+    </div>
+    <div class="ui action input display-none" id="add-column-title">
+      <input type="text" name="new-column-title" id="new-column-title" placeholder="Título da coluna">
+      <button class="ui button primary" id="btn-1-1">Inserir coluna</button>
+    </div>
+  </div>
+  <div class="ui middle aligned celled list ordered" id="column-list"></div>
+  <button class="ui button primary display-none" id="btn-1-2">Próximo</button>
 </div>
 <div class="ui attached segment display-none" id="segment-2">
-  EXISTENTE
   <button class="ui button primary" id="btn-2-0">Conectar planilha</button>
 </div>
 <div class="ui attached segment display-none" id="segment-3">
-  COLUNA PRINCIPAL
   <button class="ui button primary" id="btn-3-0">Selecionar coluna</button>
   <button class="ui button primary" id="btn-3-1">Testar e salvar</button>
 </div>
 <div class="ui attached segment display-none" id="segment-4">
-  CONCLUÍDO
 </div>
 <div class="ui four bottom attached steps mini" id="bottom-steps">
   <a class="step active" id="step-0">
@@ -48,7 +55,7 @@
     <i class="check icon"></i>
     <div class="content">
       <div class="title">Configurado</div>
-      <div class="description">Conexão com a planilha testada.</div>
+      <div class="description">Conexão com a planilha finalizada.</div>
     </div>
   </a>
 </div>

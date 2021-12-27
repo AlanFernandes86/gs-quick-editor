@@ -16,6 +16,7 @@ const regNumbers = /[0-9]+/g;
 const regBeforeHyphen = /[^\-]*/;
 const regAfterHyphen = /[a-zA-Zà-úÀ-Ú0-9º \.]+$/g;
 
+let spreadsheet = {};
 let objects = [];
 let tempObject = {};
 
@@ -36,8 +37,23 @@ window.onload = () => {
 
 function loadHome() {
   $('#home').load('home.html', () => {
-    let isExistingSheet = false;
 
+    let isExistingSheet = false;
+    let columnTitleList = [];
+    let columnTitleIndex = 0;
+  
+    const inputNewSheetTitle = document.getElementById('new-sheet-title');
+    inputNewSheetTitle.oninput = (event) => spreadsheet.title = event.target.value;
+    
+    const inputNewColumnTitle = document.getElementById('new-column-title');
+    inputNewColumnTitle.onkeyup = (event) => {
+      if (event.key === 'Enter') {
+        insertColumnTitle();
+      }
+    }
+
+    const columnList = document.getElementById('column-list');
+    
     class HomeStep {
       constructor(element, bottomStep, ...actions) {
         this.element = element;
@@ -47,7 +63,7 @@ function loadHome() {
     }
     const homeSteps = [
       new HomeStep(document.getElementById('segment-0'), 0, newSheet, existingSheet),
-      new HomeStep(document.getElementById('segment-1'), 1, createSheet),
+      new HomeStep(document.getElementById('segment-1'), 1, createSheet, insertColumnTitle, saveColumnsTitles),
       new HomeStep(document.getElementById('segment-2'), 1, connectSheet),
       new HomeStep(document.getElementById('segment-3'), 2, setMainColumn, testSheetConnection),
       new HomeStep(document.getElementById('segment-4'), 3),
@@ -74,7 +90,6 @@ function loadHome() {
       const from = +Array(...segments)
                     .find((segment) => !segment.classList.contains('display-none'))
                     .id.match(regAfterHyphen)[0];
-      console.log(from);
       let to = +event.currentTarget.id.match(regAfterHyphen)[0];
 
       if (to === 1 && isExistingSheet) { 
@@ -82,8 +97,7 @@ function loadHome() {
       } else if (to > 1) {
         to += 1;
       }
-            
-      console.log(to);
+
       toggleSteps(from, to);
     }
 
@@ -133,7 +147,110 @@ function loadHome() {
     }
 
     function createSheet() {
-      toggleSteps(...navigation.createSheetToMainColumn);
+      const btn0 = document.getElementById('btn-1-0');
+       
+      btn0.classList.add('loading');
+      if (spreadsheet.title !== '' && spreadsheet.title) {
+        requestCreateSheet(spreadsheet.title).then((result) => {
+          spreadsheet.spreadsheetId = result.spreadsheetId;
+          insertLeftCornerLabel(inputNewSheetTitle, 'check', 'green', 'disabled')
+          btn0.classList.add('disabled');
+          btn0.classList.remove('loading');
+          document.getElementById('add-column-title').classList.remove('display-none');
+        });
+      } else {
+        insertLeftCornerLabel(inputNewSheetTitle, 'close', 'red', 'enabled');
+        btn0.classList.remove('loading');
+      }
+    }
+
+    function insertLeftCornerLabel(input, icon, color, status) {
+      const div = document.createElement('div');
+      div.classList.add('ui', 'left', 'corner', 'label');
+      const i = document.createElement('i');
+      i.classList.add(icon, 'icon', color);
+      div.appendChild(i);
+      input.parentElement.classList.add('left', 'corner', 'labeled', status);
+      input.parentElement.appendChild(div);
+    }
+
+    async function requestCreateSheet(title) {
+      const spreadsheetBody = {
+        "properties": {
+          "title": title,
+        },
+      };
+      return new Promise((resolve) => {
+        const request = gapi.client.sheets.spreadsheets.create({}, spreadsheetBody);
+        request.then(function(response) {
+          resolve(response.result);
+        }, function(reason) {
+          console.error('error: ' + reason.result.error.message);
+        });
+      });
+    }
+
+    function insertColumnTitle() {
+      const item = document.createElement('div');
+      item.classList.add('item');
+
+      const rightFloatedContent = document.createElement('div');
+      rightFloatedContent.classList.add('right', 'floated', 'content');
+      item.appendChild(rightFloatedContent);
+
+      const i = document.createElement('i');
+      i.classList.add('icon', 'close', 'red', 'large');
+      rightFloatedContent.appendChild(i);
+
+      const content = document.createElement('div');
+      content.classList.add('content');
+      item.appendChild(content);
+
+      const header = document.createElement('div');
+      header.classList.add('header');
+      header.textContent = inputNewColumnTitle.value;
+      content.appendChild(header);
+      
+      columnTitleList.push({title: inputNewColumnTitle.value, index: columnTitleIndex});
+      item.id = `column-title-${columnTitleIndex}`;
+      i.id = `delete-${columnTitleIndex}`;
+      columnTitleIndex += 1;
+
+      inputNewColumnTitle.value = '';
+      inputNewColumnTitle.focus();
+
+      columnList.appendChild(item);
+      
+      i.onclick = deleteColumnTitle;
+
+      btnOneTwo();
+    }
+
+    function saveColumnsTitles() {
+        toggleSteps(...navigation.createSheetToMainColumn);   
+    }
+
+    function deleteColumnTitle(event) {
+      const id = +event.target.id.match(regAfterHyphen)[0];
+      const elementId = `column-title-${id}`;
+
+      columnTitleList.forEach((title, index) => {
+        if (title.index === id) {
+          columnTitleList.splice(index, 1);
+        }
+      });
+      
+      const element = document.getElementById(elementId);
+      element.remove();
+
+      btnOneTwo();
+    }
+
+    function btnOneTwo() {
+      const btn2 = document.getElementById('btn-1-2');
+      columnTitleList.length > 0 
+      ? btn2.classList.remove('display-none') 
+      : btn2.classList.add('display-none');
     }
 
     function connectSheet() {
@@ -413,7 +530,7 @@ async function putObject() {
   return new Promise((resolve, reject) => {
     const params = {
       spreadsheetId: '1I9RpIdtTyOvFZ5WPU4KYqzux4XmPotF2lkfLpQY-tnE',
-      range: 'A10:AD',
+      range: 'A11',
       valueInputOption: 'RAW',
       includeValuesInResponse: true,
     }

@@ -38,5 +38,30 @@ footer {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 20rem;
+  min-height: 20rem;
+}
+
+#segment-1 {
+  flex-direction: column;
+}
+
+#column-list {
+  width: 90% !important;
+}
+
+#column-list i:hover {
+  cursor: pointer;
+}
+
+#btn-group-segment-1 {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#btn-group-segment-1 .ui.action.input {
+  margin-top: 1rem;
+  width: 90%
 }
