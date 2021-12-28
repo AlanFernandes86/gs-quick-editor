@@ -65,3 +65,25 @@ footer {
   margin-top: 1rem;
   width: 90%
 }
+
+#segment-3 {
+  flex-direction: column;
+  justify-content: space-evenly;
+}
+
+.spreadsheetUrl {
+  max-width: 23rem;
+  word-wrap: break-word;
+}
+
+#spreadsheet-url {
+  width: 90%
+}
+
+#sheet-rows {
+  margin-top: 1rem;
+}
+
+#segment-2 {
+  flex-direction: column;
+}

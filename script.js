@@ -15,7 +15,9 @@ const menuBtnSignOut = document.getElementById('menu-btn-sign-out');
 const regNumbers = /[0-9]+/g;
 const regBeforeHyphen = /[^\-]*/;
 const regAfterHyphen = /[a-zA-Zà-úÀ-Ú0-9º \.]+$/g;
+const alphabetUp = "abcdefghijklmnopqrstuvwxyz".toUpperCase().split("");
 
+let spreadsheets = [];
 let spreadsheet = {};
 let objects = [];
 let tempObject = {};
@@ -27,7 +29,17 @@ menuBtnSignOut.onclick = handleSignOutClick;
 menuContainer.onclick = toggleMenuItem;
 
 window.onload = () => {
+  if (localStorage.getItem('spreadsheets')) {
+    spreadsheets = JSON.parse(localStorage.getItem('spreadsheets'));
+  }
   handleClientLoad();
+}
+
+function appendPre(message) {
+  pre.classList.remove('display-none');
+  pre.innerHTML = '';
+  const textContent = document.createTextNode(message + '\n');
+  pre.appendChild(textContent);
 }
 
 /* // NÃO SEI EXATAMENTE O QUE FAZ, NÃO USAR POR ENQUANTO.
@@ -39,12 +51,12 @@ function loadHome() {
   $('#home').load('home.html', () => {
 
     let isExistingSheet = false;
-    let columnTitleList = [];
-    let columnTitleIndex = 0;
-  
+    let columnList = [];
+    let columnIndex = 0;
+
     const inputNewSheetTitle = document.getElementById('new-sheet-title');
     inputNewSheetTitle.oninput = (event) => spreadsheet.title = event.target.value;
-    
+
     const inputNewColumnTitle = document.getElementById('new-column-title');
     inputNewColumnTitle.onkeyup = (event) => {
       if (event.key === 'Enter') {
@@ -52,8 +64,13 @@ function loadHome() {
       }
     }
 
-    const columnList = document.getElementById('column-list');
-    
+    const checkIcon = document.getElementById('check-icon');
+    const columnListHtml = document.getElementById('column-list');
+    const btn1Two = document.getElementById('btn-1-2');
+    const selectColumns = document.getElementById('select-columns');
+    const warningContainer = document.getElementById('warning-container');
+    const warningMessage = document.getElementById('warning-message');
+
     class HomeStep {
       constructor(element, bottomStep, ...actions) {
         this.element = element;
@@ -63,19 +80,21 @@ function loadHome() {
     }
     const homeSteps = [
       new HomeStep(document.getElementById('segment-0'), 0, newSheet, existingSheet),
-      new HomeStep(document.getElementById('segment-1'), 1, createSheet, insertColumnTitle, saveColumnsTitles),
-      new HomeStep(document.getElementById('segment-2'), 1, connectSheet),
-      new HomeStep(document.getElementById('segment-3'), 2, setMainColumn, testSheetConnection),
+      new HomeStep(document.getElementById('segment-1'), 1, setSheetTitle, insertColumnTitle, saveColumnsAndGo),
+      new HomeStep(document.getElementById('segment-2'), 1, selectExistingSheet),
+      new HomeStep(document.getElementById('segment-3'), 2, setMainColumn, createSpreadsheet, addSpreadsheet),
       new HomeStep(document.getElementById('segment-4'), 3),
     ];
 
     const navigation = {
-      startToCreateSheet : [ 0, 1 ], 
-      startToExistingSheet : [0, 2],
-      createSheetToMainColumn : [ 1, 3 ],
-      existingSheetToMainColumn : [ 2, 3 ],
-      mainColumnToFinished : [ 3, 4 ],
+      startToCreateSheet: [0, 1],
+      startToExistingSheet: [0, 2],
+      createSheetToMainColumn: [1, 3],
+      existingSheetToMainColumn: [2, 3],
+      mainColumnToFinished: [3, 4],
     }
+
+    handleHome();
 
     homeSteps.forEach((step, index) => {
       setActions(index);
@@ -84,20 +103,27 @@ function loadHome() {
     document.querySelectorAll('.step').forEach((step) => {
       step.onclick = bottomStepsToggle;
     })
-    
+
+    function handleHome() {
+      if (spreadsheets && spreadsheets.length > 0 && spreadsheets.some((spreadsheet) => spreadsheet.active)) {
+        spreadsheet = spreadsheets.find((spreadsheet) => spreadsheet.active).spreadsheet;
+        loadSpreadsheetsTable();
+        toggleSteps(0, 4);
+      };
+    }
+
     function bottomStepsToggle(event) {
       const segments = document.querySelectorAll('.ui.attached.segment');
       const from = +Array(...segments)
-                    .find((segment) => !segment.classList.contains('display-none'))
-                    .id.match(regAfterHyphen)[0];
+        .find((segment) => !segment.classList.contains('display-none'))
+        .id.match(regAfterHyphen)[0];
       let to = +event.currentTarget.id.match(regAfterHyphen)[0];
 
-      if (to === 1 && isExistingSheet) { 
-        to = 2 
+      if (to === 1 && isExistingSheet) {
+        to = 2
       } else if (to > 1) {
         to += 1;
       }
-
       toggleSteps(from, to);
     }
 
@@ -105,30 +131,50 @@ function loadHome() {
       const homeStep = homeSteps[step];
       homeStep.actions.forEach((action, index) => {
         document.getElementById(`btn-${step}-${index}`).onclick = action;
-      }); 
+      });
+    }
+
+    function reloadHome() {
+      home.innerHTML = '';
+      loadHome();
     }
 
     function toggleSteps(from, to) {
-      homeSteps[from].element.classList.add('display-none');
-      homeSteps[to].element.classList.remove('display-none');
-      from = homeSteps[from].bottomStep;
-      to = homeSteps[to].bottomStep;
-      setActiveBottomStep(from, to);
-      if (from > to) {
-        while (from > to) {
-          setDisabledBottomStep(from, false);
-          from -= 1;
-        }
+      if (to === 4) {
+        checkIcon.classList.add('green');
+        setDisabledBottomStep(1, false);
+        setDisabledBottomStep(2, false);
       } else {
-        setDisabledBottomStep(to, true);
-      }      
+        checkIcon.classList.remove('green');
+      }
+      if (to === 0) {
+        spreadsheet = {}
+        spreadsheets.forEach((spreadsheet) => {
+          spreadsheet.active = false;
+        });
+        reloadHome();
+      } else {
+        homeSteps[from].element.classList.add('display-none');
+        homeSteps[to].element.classList.remove('display-none');
+        from = homeSteps[from].bottomStep;
+        to = homeSteps[to].bottomStep;
+        setActiveBottomStep(from, to);
+        if (from > to) {
+          while (from > to) {
+            setDisabledBottomStep(from, false);
+            from -= 1;
+          }
+        } else {
+          setDisabledBottomStep(to, true);
+        }
+      }
     }
 
     function setDisabledBottomStep(position, enabled) {
       const bottomStep = document.getElementById(`step-${position}`);
-      enabled 
-      ? bottomStep.classList.remove('disabled')
-      : bottomStep.classList.add('disabled');
+      enabled
+        ? bottomStep.classList.remove('disabled')
+        : bottomStep.classList.add('disabled');
     }
 
     function setActiveBottomStep(from, to) {
@@ -146,21 +192,14 @@ function loadHome() {
       isExistingSheet = true;
     }
 
-    function createSheet() {
-      const btn0 = document.getElementById('btn-1-0');
-       
-      btn0.classList.add('loading');
+    function setSheetTitle() {
+      const btn1Zero = document.getElementById('btn-1-0');
       if (spreadsheet.title !== '' && spreadsheet.title) {
-        requestCreateSheet(spreadsheet.title).then((result) => {
-          spreadsheet.spreadsheetId = result.spreadsheetId;
-          insertLeftCornerLabel(inputNewSheetTitle, 'check', 'green', 'disabled')
-          btn0.classList.add('disabled');
-          btn0.classList.remove('loading');
-          document.getElementById('add-column-title').classList.remove('display-none');
-        });
+        insertLeftCornerLabel(inputNewSheetTitle, 'check', 'green', 'disabled')
+        btn1Zero.classList.add('disabled');
+        document.getElementById('add-column-title').classList.remove('display-none');
       } else {
         insertLeftCornerLabel(inputNewSheetTitle, 'close', 'red', 'enabled');
-        btn0.classList.remove('loading');
       }
     }
 
@@ -172,22 +211,6 @@ function loadHome() {
       div.appendChild(i);
       input.parentElement.classList.add('left', 'corner', 'labeled', status);
       input.parentElement.appendChild(div);
-    }
-
-    async function requestCreateSheet(title) {
-      const spreadsheetBody = {
-        "properties": {
-          "title": title,
-        },
-      };
-      return new Promise((resolve) => {
-        const request = gapi.client.sheets.spreadsheets.create({}, spreadsheetBody);
-        request.then(function(response) {
-          resolve(response.result);
-        }, function(reason) {
-          console.error('error: ' + reason.result.error.message);
-        });
-      });
     }
 
     function insertColumnTitle() {
@@ -210,36 +233,32 @@ function loadHome() {
       header.classList.add('header');
       header.textContent = inputNewColumnTitle.value;
       content.appendChild(header);
-      
-      columnTitleList.push({title: inputNewColumnTitle.value, index: columnTitleIndex});
-      item.id = `column-title-${columnTitleIndex}`;
-      i.id = `delete-${columnTitleIndex}`;
-      columnTitleIndex += 1;
+
+      columnList.push({ title: inputNewColumnTitle.value, index: columnIndex });
+      item.id = `column-${columnIndex}`;
+      i.id = `delete-${columnIndex}`;
+      columnIndex += 1;
 
       inputNewColumnTitle.value = '';
       inputNewColumnTitle.focus();
 
-      columnList.appendChild(item);
-      
+      columnListHtml.appendChild(item);
+
       i.onclick = deleteColumnTitle;
 
       btnOneTwo();
     }
 
-    function saveColumnsTitles() {
-        toggleSteps(...navigation.createSheetToMainColumn);   
-    }
-
     function deleteColumnTitle(event) {
       const id = +event.target.id.match(regAfterHyphen)[0];
-      const elementId = `column-title-${id}`;
+      const elementId = `column-${id}`;
 
-      columnTitleList.forEach((title, index) => {
+      columnList.forEach((title, index) => {
         if (title.index === id) {
-          columnTitleList.splice(index, 1);
+          columnList.splice(index, 1);
         }
       });
-      
+
       const element = document.getElementById(elementId);
       element.remove();
 
@@ -247,26 +266,278 @@ function loadHome() {
     }
 
     function btnOneTwo() {
-      const btn2 = document.getElementById('btn-1-2');
-      columnTitleList.length > 0 
-      ? btn2.classList.remove('display-none') 
-      : btn2.classList.add('display-none');
+      columnList.length > 0
+        ? btn1Two.classList.remove('display-none')
+        : btn1Two.classList.add('display-none');
     }
 
-    function connectSheet() {
-      toggleSteps(...navigation.existingSheetToMainColumn);
+    function saveColumnsAndGo() {
+      spreadsheet.values = [columnList.map((column) => column.title)];
+      setSelectedColumnOptions();
+      toggleSteps(...navigation.createSheetToMainColumn);
+    }
+
+    function setSelectedColumnOptions() {
+      selectColumns.innerHTML = '<option value="">Colunas</option>';
+      $('.ui.dropdown').dropdown();
+      const values = spreadsheet.values[0];
+      values.forEach((value) => {
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = value;
+        selectColumns.appendChild(option);
+      });
     }
 
     function setMainColumn() {
-      
+      const btn3Zero = document.getElementById('btn-3-0');
+      const btn3One = document.getElementById('btn-3-1');
+      const btn3Two = document.getElementById('btn-3-2');
+      if (selectColumns.value !== '') {
+        isExistingSheet
+          ? btn3Two.classList.remove('display-none')
+          : btn3One.classList.remove('display-none');
+        btn3Zero.classList.add('disabled');
+        warningContainer.classList.add('display-none');
+        spreadsheet.mainColumn = selectColumns.value;
+      } else {
+        warningContainer.classList.remove('display-none');
+      }
+      selectColumns.onchange = (event) => {
+        btn3Zero.classList.remove('disabled');
+        btn3One.classList.add('display-none');
+      };
     }
 
-    function testSheetConnection() {
+    function selectExistingSheet(event) {
+      const input = document.getElementById('existing-sheet-url');
+      const url = input.value.split('/');
+      if (url[0] === 'https:' && url[2] === 'docs.google.com' && url[3] === 'spreadsheets') {
+        const spreadsheetId = url[5];
+        event.target.classList.add('loading');
+        getSpreadsheet(spreadsheetId).then((response) => {
+          if (response.status === 200) {
+            insertLeftCornerLabel(input, 'check', 'green', 'enabled');
+            spreadsheet.title = response.result.properties.title;
+            spreadsheet.spreadsheetUrl = response.result.spreadsheetUrl;
+            spreadsheet.spreadsheetId = response.result.spreadsheetId;
+            loadIndexRowsSelect(response.result.sheets[0].data[0].rowData);
+          }
+          event.target.classList.remove('loading');
+        });
+        warningContainer.classList.add('display-none');
+      } else {
+        warningContainer.classList.remove('display-none');
+        warningMessage.textContent = 'Url inválida.';
+      }
+    }
+
+    function loadIndexRowsSelect(rowData) {
+      const selectContainer = document.getElementById('sheet-rows');
+      selectContainer.classList.remove('display-none');
+
+      const select = document.getElementById('select-rows');
+
+      const option = document.createElement('option');
+      option.value = '';
+      option.textContent = 'Linha de referência';
+      select.appendChild(option);
+      $('#select-rows').dropdown();
+
+      rowData.forEach((row, index) => {
+        const option = document.createElement('option');
+        option.value = index;
+        option.textContent = index + 1;
+        select.appendChild(option);
+      });
+
+      const btn2One = document.getElementById('btn-2-1');
+      btn2One.onclick = () => {
+        const values = [];
+        rowData[select.value].values.forEach((value, index) => {
+          value.formattedValue ? values.push(value.formattedValue) : values.push('');
+        });
+        spreadsheet.values = [values];
+        spreadsheet.range = findRange(+select.value + 1, values.length);
+        setSelectedColumnOptions();
+        toggleSteps(...navigation.existingSheetToMainColumn);
+      };
+    }
+
+    function findRange(line, columns) {
+      let columnPosition = columns;
+      let pointer = 0;
+      while (columnPosition > alphabetUp.length) {
+        pointer += 1;
+        columnPosition -= alphabetUp.length;
+      }
+      let range = `A${line}:`;
+      if (pointer - 1 >= 0) range += alphabetUp[pointer - 1];
+      range += alphabetUp[columnPosition - 1]
+      return range;
+    }
+
+    function createElementTd(textContent) {
+      const td = document.createElement('td');
+      td.textContent = textContent;
+      return td;
+    }
+
+    function createSpreadsheet(event) {
+      event.target.classList.add('loading');
+      requestCreateSheet(spreadsheet.title)
+        .then((result) => {
+          spreadsheet.spreadsheetId = result.spreadsheetId;
+          spreadsheet.spreadsheetUrl = result.spreadsheetUrl;
+          putSpreadsheetData('A1', spreadsheet.spreadsheetId, spreadsheet.values[0])
+            .then((result) => {
+              spreadsheet.values = result.updatedData.values;
+              spreadsheet.range = result.updatedData.range;
+
+              insertLocalSheet();
+              loadSpreadsheetsTable();
+
+              toggleSteps(...navigation.mainColumnToFinished);
+
+              event.target.classList.remove('loading');
+            })
+        })
+    }
+
+    function addSpreadsheet() {
+      insertLocalSheet();
+      loadSpreadsheetsTable();
       toggleSteps(...navigation.mainColumnToFinished);
     }
 
+    function insertLocalSheet() {
+      if (spreadsheets) {
+        spreadsheets.forEach((spreadsheet) => {
+          spreadsheet.active = false;
+        });
+      }
+      spreadsheets.push({ spreadsheet, active: true });
+      updateLocalStorage();
+    }
 
+    function removeLocalSheet(index) {
+
+      if (spreadsheets[index].active && spreadsheets.length > 1) {
+        spreadsheets.splice(index, 1);
+        spreadsheets[0].active = true;
+      } else {
+        spreadsheets.splice(index, 1);
+      }
+
+      updateLocalStorage();
+      reloadHome();
+    }
+
+    function selectActiveSheet(index) {
+      spreadsheets.forEach((spreadsheet, i) => {
+        if (index === i) {
+          spreadsheet.active = true;
+          spreadsheets.splice(i, 1);
+          spreadsheets.splice(0, 0, spreadsheet);
+        } else {
+          spreadsheet.active = false;
+        }
+      });
+      updateLocalStorage();
+      reloadHome();
+    }
+
+    function updateLocalStorage() {
+      localStorage.setItem('spreadsheets', JSON.stringify(spreadsheets));
+    }
+
+    function loadSpreadsheetsTable() {
+      const tbody = document.getElementById('tbody-data');
+      spreadsheets.forEach((spreadsheet, index) => {
+
+        const tr = document.createElement('tr');
+
+        const td = document.createElement('td');
+        td.classList.add('left', 'aligned', 'collapsing');
+        td.style.textAlign = 'right';
+        tr.appendChild(td);
+
+        const button = document.createElement('button');
+        button.classList.add('circular', 'ui', 'icon', 'button', 'negative');
+        button.id = `remove-spreadsheet-${index}`;
+
+        const i = document.createElement('i');
+        i.classList.add('icon', 'close');
+        button.appendChild(i);
+
+        button.onclick = removeSpreadsheet;
+
+        td.appendChild(button);
+
+        const td2 = document.createElement('td');
+        td2.classList.add('collapsing');
+        tr.appendChild(td2);
+
+        const i2 = document.createElement('i');
+        i2.classList.add('file', 'alternate', 'icon');
+        td2.appendChild(i2);
+
+        const nodeTextContent = document.createTextNode(spreadsheet.spreadsheet.title);
+        td2.appendChild(nodeTextContent);
+
+        const td3 = document.createElement('td');
+        td3.classList.add('spreadsheetUrl');
+        td3.textContent = spreadsheet.spreadsheet.spreadsheetUrl;
+        tr.appendChild(td3);
+
+        const td4 = document.createElement('td');
+        td4.classList.add('right', 'aligned', 'collapsing');
+
+        if (spreadsheet.active) {
+          const i = document.createElement('i');
+          i.classList.add('circular', 'check', 'large', 'icon', 'green');
+          td4.appendChild(i);
+        } else {
+          const button = document.createElement('button');
+          button.classList.add('ui', 'button', 'positive', 'circular');
+          button.id = `set-selected-${index}`;
+          button.textContent = 'Selecionar';
+          td4.appendChild(button);
+          button.onclick = setSelectedSpreadsheet;
+        };
+        tr.appendChild(td4);
+        tbody.appendChild(tr);
+      });
+    }
+
+    function removeSpreadsheet(event) {
+      const id = +event.currentTarget.id.match(regAfterHyphen)[0];
+      removeLocalSheet(id);
+    }
+
+    function setSelectedSpreadsheet(event) {
+      const id = +event.target.id.match(regAfterHyphen)[0];
+      selectActiveSheet(id);
+    }
+
+    async function requestCreateSheet(title) {
+      const spreadsheetBody = {
+        "properties": {
+          "title": title,
+        },
+      };
+      return new Promise((resolve) => {
+        const request = gapi.client.sheets.spreadsheets.create({}, spreadsheetBody);
+        request.then(function (response) {
+          resolve(response.result);
+        }, function (reason) {
+          console.error('error: ' + reason.result.error.message);
+        });
+      });
+    }
   });
+
+  console.log(spreadsheet);
 }
 
 function toggleMenuItem(event) {
@@ -315,11 +586,6 @@ function handleClientLoad() {
   gapi.load('client:auth2', initClient);
 }
 
-function appendPre(message) {
-  const textContent = document.createTextNode(message + '\n');
-  pre.appendChild(textContent);
-}
-
 /**
  *  Initializes the API client library and sets up sign-in state
  *  listeners.
@@ -348,6 +614,7 @@ function updateSignInStatus(isSignedIn) {
   if (isSignedIn) {
     pre.innerHTML = '';
     root.classList.remove('display-none');
+    pre.classList.add('display-none');
   } else {
     root.classList.add('display-none');
     appendPre('Você não está autenticado! Favor clicar no botão "Sign In" no menu superior.\n'
@@ -378,7 +645,7 @@ function handleSignOutClick(event) {
 
 async function listAll() {
   isLoading(true);
-  getAll()
+  getSpreadsheetData()
     .then((response) => {
       objects = response;
       listNames(response);
@@ -390,18 +657,64 @@ async function listAll() {
     })
 }
 
-async function getAll() {
+async function getSpreadsheet(spreadsheetId) {
+  const params = {
+    // The spreadsheet to request.
+    spreadsheetId: spreadsheetId,  // TODO: Update placeholder value.
+
+    // The ranges to retrieve from the spreadsheet.
+    ranges: [],  // TODO: Update placeholder value.
+
+    // True if grid data should be returned.
+    // This parameter is ignored if a field mask was set in the request.
+    includeGridData: true,  // TODO: Update placeholder value.
+  };
+
+  return new Promise((resolve) => {
+    const request = gapi.client.sheets.spreadsheets.get(params);
+    request.then(function (response) {
+      resolve(response);
+    }, function (reason) {
+      console.error('error: ' + reason.result.error.message);
+    });
+  });
+}
+
+async function getSpreadsheetData(spreadsheetId, range) {
   return new Promise((resolve, reject) => {
     gapi.client.sheets.spreadsheets.values.get({
-      spreadsheetId: '1Qg0BM5YWpI9NpRJ82W_uKV0eG5ZAlJ61dO5jb-3pB-w',
-      range: 'A1:AC',
+      spreadsheetId: spreadsheetId,
+      range: range,
     }).then(function (response) {
       const range = response.result;
       if (range.values.length > 0) {
-        resolve(arrayToObject(range.values));
+        resolve(range);
       } else {
         appendPre('No data found.');
       }
+    }, function (response) {
+      appendPre('Error: ' + response.result.error.message);
+    });
+  });
+}
+
+async function putSpreadsheetData(range, spreadsheetId, values) {
+  return new Promise((resolve, reject) => {
+    const params = {
+      spreadsheetId: spreadsheetId,
+      range: range,
+      valueInputOption: 'RAW',
+      includeValuesInResponse: true,
+    }
+
+    const valueRangeBody = {
+      values: [
+        values,
+      ],
+      majorDimension: 'ROWS',
+    };
+    gapi.client.sheets.spreadsheets.values.update(params, valueRangeBody).then(function (response) {
+      resolve(response.result);
     }, function (response) {
       appendPre('Error: ' + response.result.error.message);
     });
@@ -526,31 +839,8 @@ function toggleFormOrList() {
   }
 }
 
-async function putObject() {
-  return new Promise((resolve, reject) => {
-    const params = {
-      spreadsheetId: '1I9RpIdtTyOvFZ5WPU4KYqzux4XmPotF2lkfLpQY-tnE',
-      range: 'A11',
-      valueInputOption: 'RAW',
-      includeValuesInResponse: true,
-    }
-
-    const valueRangeBody = {
-      values: [
-        Object.values(tempObject),
-      ],
-      majorDimension: 'ROWS',
-    };
-    gapi.client.sheets.spreadsheets.values.update(params, valueRangeBody).then(function (response) {
-      resolve(response);
-    }, function (response) {
-      appendPre('Error: ' + response.result.error.message);
-    });
-  });
-}
-
 async function saveData(event) {
-  const response = await putObject();
+  const response = await putSpreadsheetData();
   console.log(response.status);
 }
 

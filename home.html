@@ -1,4 +1,9 @@
-<p>Bem vindo ao GS Quick Editor!</p>
+<div class="ui attached message">
+  <div class="header">
+    Bem vindo ao GS Quick Editor!
+  </div>
+  <p id="guide-message">Escolha entre criar uma nova planilha ou se conectar a uma existente.</p>
+</div>
 <div class="ui attached segment" id="segment-0">
   <div class="ui large buttons">
     <button class="ui button positive" id="btn-0-0">Nova Planilha</button>
@@ -10,7 +15,7 @@
   <div id="btn-group-segment-1">
     <div class="ui action input" id="create-new-sheet">
       <input type="text" name="new-sheet-title" id="new-sheet-title" placeholder="Título da planilha">
-      <button class="ui button primary" id="btn-1-0">Criar planilha</button>
+      <button class="ui button primary" id="btn-1-0">Inserir Título</button>
     </div>
     <div class="ui action input display-none" id="add-column-title">
       <input type="text" name="new-column-title" id="new-column-title" placeholder="Título da coluna">
@@ -18,16 +23,42 @@
     </div>
   </div>
   <div class="ui middle aligned celled list ordered" id="column-list"></div>
-  <button class="ui button primary display-none" id="btn-1-2">Próximo</button>
+  <button class="ui button primary display-none" id="btn-1-2">Salvar e Avançar</button>
 </div>
 <div class="ui attached segment display-none" id="segment-2">
-  <button class="ui button primary" id="btn-2-0">Conectar planilha</button>
+  <div class="ui action input" id="spreadsheet-url">
+    <input type="text" name="existing-sheet-url" id="existing-sheet-url" placeholder="Url da planilha">
+    <button class="ui button primary" id="btn-2-0">Conectar planilha</button>
+  </div>
+  <div class="ui action input display-none" id="sheet-rows">
+    <select class="ui dropdown" id="select-rows"></select>
+    <button class="ui button primary" id="btn-2-1">Selecionar e Avançar</button>
+  </div>
 </div>
 <div class="ui attached segment display-none" id="segment-3">
-  <button class="ui button primary" id="btn-3-0">Selecionar coluna</button>
-  <button class="ui button primary" id="btn-3-1">Testar e salvar</button>
+  <div class="ui action input">
+    <select class="ui dropdown" id="select-columns"></select>
+    <button class="ui button primary" id="btn-3-0">Definir principal</button>
+  </div>
+  <button class="ui button primary display-none" id="btn-3-1">Criar planilha</button>
+  <button class="ui button primary display-none" id="btn-3-2">Adicionar planilha</button>
 </div>
 <div class="ui attached segment display-none" id="segment-4">
+  <table class="ui celled striped table">
+    <thead>
+      <tr>
+        <th colspan="4">
+          Planilhas conectadas
+        </th>
+      </tr>
+    </thead>
+    <tbody id="tbody-data">
+    </tbody>
+  </table>
+</div>
+<div class="ui bottom attached warning message display-none" id="warning-container">
+  <i class="icon exclamation"></i>
+  <span id="warning-message"> Defina uma coluna como principal.</span>
 </div>
 <div class="ui four bottom attached steps mini" id="bottom-steps">
   <a class="step active" id="step-0">
@@ -52,7 +83,7 @@
     </div>
   </a>
   <a class="step disabled" id="step-3">
-    <i class="check icon"></i>
+    <i class="check icon" id="check-icon"></i>
     <div class="content">
       <div class="title">Configurado</div>
       <div class="description">Conexão com a planilha finalizada.</div>
