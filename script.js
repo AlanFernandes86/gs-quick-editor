@@ -1,16 +1,9 @@
-const menuContainer = document.querySelector('.ui.menu.container');
 const root = document.getElementById('root');
 const home = document.getElementById('home');
-const listData = document.getElementById('list-data');
-const formData = document.getElementById('form-data');
+const list = document.getElementById('list');
 const template = document.getElementById('template');
 const howToUse = document.getElementById('how-to-use');
 const pre = document.getElementById('error');
-
-const menuBtnCancel = document.getElementById('menu-btn-cancel');
-const menuBtnSave = document.getElementById('menu-btn-save');
-const menuBtnSignIn = document.getElementById('menu-btn-sign-in');
-const menuBtnSignOut = document.getElementById('menu-btn-sign-out');
 
 const regNumbers = /[0-9]+/g;
 const regBeforeHyphen = /[^\-]*/;
@@ -22,17 +15,12 @@ let spreadsheet = {};
 let objects = [];
 let tempObject = {};
 
-menuBtnCancel.onclick = toggleFormOrList;
-menuBtnSave.onclick = saveData;
-menuBtnSignIn.onclick = handleSignInClick;
-menuBtnSignOut.onclick = handleSignOutClick;
-menuContainer.onclick = toggleMenuItem;
-
 window.onload = () => {
   if (localStorage.getItem('spreadsheets')) {
     spreadsheets = JSON.parse(localStorage.getItem('spreadsheets'));
   }
-  handleClientLoad();
+  loadMenu();
+  loadGoogleApi();
 }
 
 function appendPre(message) {
@@ -46,6 +34,67 @@ function appendPre(message) {
  window.onreadystatechange = () => {
   if (this.readyState === 'complete') this.onload();
 } */
+
+let menuBtnSignIn = undefined;
+let menuBtnSignOut = undefined;
+function loadMenu() {
+  $('#menu').load('menu.html', () => {
+    const menuContainer = document.querySelector('.ui.menu.container');
+    const mMenuBtnSignIn = document.getElementById('menu-btn-sign-in');
+    const mMenuBtnSignOut = document.getElementById('menu-btn-sign-out');
+
+    menuBtnSignIn = mMenuBtnSignIn;
+    menuBtnSignOut = mMenuBtnSignOut;    
+
+    mMenuBtnSignIn.onclick = handleSignInClick;
+    mMenuBtnSignOut.onclick = handleSignOutClick;
+    menuContainer.onclick = toggleMenuItem;
+
+    function toggleMenuItem(event) {
+      const id = event.target.id;
+      activeMenuItem(id);
+      updateRoot(id);
+    }
+    
+    function activeMenuItem(id) {
+      const menuItems = document.querySelectorAll('a.item');
+      new Array(...menuItems).every((element) => {
+        if (element.id === id && element.classList.contains('active')) return false;
+        element.id === id ? element.classList.add('active') : element.classList.remove('active');
+        return true;
+      });
+    }
+    
+    function updateRoot(id) {
+      switch (id) {
+        case 'menu-item-home':
+          toggleRootChildrenDisplay(home.id);
+          loadHome();
+          break;
+        case 'menu-item-list-data':
+          toggleRootChildrenDisplay(list.id);
+          loadList()
+          break;
+        case 'menu-item-template':
+          toggleRootChildrenDisplay(template.id);
+          break;
+        case 'menu-item-how-to-use':
+          toggleRootChildrenDisplay(howToUse.id);
+          break;
+      }
+    }
+    
+    function toggleRootChildrenDisplay(id) {
+      const rootDiv = root.children;
+      new Array(...rootDiv).every((element) => {
+        if (element.id === id && !element.classList.contains('display-none')) return false;
+        element.id === id ? element.classList.remove('display-none') : element.classList.add('display-none');
+        return true;
+      });
+    }
+
+  });
+}
 
 function loadHome() {
   $('#home').load('home.html', () => {
@@ -385,7 +434,7 @@ function loadHome() {
 
     function createSpreadsheet(event) {
       event.target.classList.add('loading');
-      requestCreateSheet(spreadsheet.title)
+      createSheet(spreadsheet.title)
         .then((result) => {
           spreadsheet.spreadsheetId = result.spreadsheetId;
           spreadsheet.spreadsheetUrl = result.spreadsheetUrl;
@@ -519,73 +568,288 @@ function loadHome() {
       const id = +event.target.id.match(regAfterHyphen)[0];
       selectActiveSheet(id);
     }
+  });
+}
 
-    async function requestCreateSheet(title) {
-      const spreadsheetBody = {
-        "properties": {
-          "title": title,
-        },
-      };
-      return new Promise((resolve) => {
-        const request = gapi.client.sheets.spreadsheets.create({}, spreadsheetBody);
-        request.then(function (response) {
-          resolve(response.result);
-        }, function (reason) {
-          console.error('error: ' + reason.result.error.message);
-        });
+function loadList() {
+  $('#list').load('list.html', () => {
+
+    const listData = document.getElementById('list-data');
+    const formData = document.getElementById('form-data');
+    const menuBtnCancel = document.getElementById('menu-btn-cancel');
+    const menuBtnSave = document.getElementById('menu-btn-save');
+    const btnSave = document.getElementById('btn-save');
+
+    menuBtnCancel.onclick = toggleFormOrList;
+    btnSave.onclick = upsertRow;
+      
+    listRows();
+
+    async function listRows() {
+      isLoading(true);
+      getSpreadsheetRows(spreadsheet.spreadsheetId, spreadsheet.range)
+        .then((result) => {
+          objects = arrayToObject(result.values);
+          listNames(objects);
+          isLoading(false);
+        })
+        .catch((error) => {
+          error.message;
+          isLoading(false);
+        })
+    }
+    
+    function arrayToObject(rows) {
+      const rowsObject = [];
+    
+      rows.forEach((row, index, array) => {
+        if (index === 0) return;
+        const object = {}
+        row.forEach((value, i) => {
+          object[array[0][i]] = value;
+        })
+        rowsObject.push(object)
       });
+      return rowsObject;
+    }
+    
+    function listNames(rowsObject) {
+      const list = document.getElementById('list-data');
+      list.innerHTML = ''
+      rowsObject.forEach((value, index) => {
+        const divItem = document.createElement('div');
+        divItem.classList.add('item');
+        list.appendChild(divItem);
+    
+        addBtnShow(divItem, index);
+        addCheckbox(divItem, value, index);
+      });
+    
+      $('.ui.checkbox').checkbox();
+    }
+    
+    function addCheckbox(divItem, value, index) {
+      const divCheckbox = document.createElement('div');
+      divCheckbox.classList.add('content');
+      divItem.appendChild(divCheckbox);
+    
+      const checkboxContainer = document.createElement('div');
+      checkboxContainer.classList.add('ui', 'checkbox');
+      divCheckbox.appendChild(checkboxContainer);
+    
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.name = 'nomes';
+      checkbox.id = `chk-${index}`;
+      checkboxContainer.appendChild(checkbox);
+    
+      const label = document.createElement('label');
+      label.textContent = value['Nome'];
+      label.classList.add('header');
+      checkboxContainer.appendChild(label);
+    }
+    
+    function addBtnShow(divItem, index) {
+      const btnContainer = document.createElement('div');
+      btnContainer.classList.add('right', 'floated', 'content');
+      divItem.appendChild(btnContainer);
+    
+      const buttonShow = document.createElement('div');
+      buttonShow.classList.add('ui', 'button');
+      buttonShow.id = `btn-${index}`;
+      buttonShow.textContent = "Mostrar dados";
+      btnContainer.appendChild(buttonShow);
+    
+      buttonShow.onclick = showData;
+    }
+    
+    function showData(event) {
+      const id = event.target.id.match(regNumbers)[0];
+      tempObject = Object.assign({}, objects[id]);
+      Object.entries(tempObject).forEach((item) => {
+        createInput(id, 'text', item);
+      });
+      toggleFormOrList();
+      btnSave.name = id;
+    }
+    
+    function createInput(objId, type, entries) {
+      const field = document.createElement('div');
+      field.className = 'field';
+      const input = document.createElement('input');
+      input.id = `${objId}-${entries[0]}`;
+      input.type = type;
+      input.value = entries[1];
+      const label = document.createElement('label');
+      label.htmlFor = input.id;
+      label.textContent = entries[0];
+    
+      input.oninput = updateValue;
+    
+      field.appendChild(label);
+      field.appendChild(input);
+      formData.appendChild(field);
+    }
+    
+    function updateValue(event) {
+      // const index = event.target.id.match(rBeforeHyphen)[0];
+      const key = event.target.id.match(regAfterHyphen)[0];
+      tempObject[key] = event.target.value;
+    }
+    
+    function toggleFormOrList() {
+      menuBtnCancel.classList.toggle('display-none');
+      menuBtnSave.classList.toggle('display-none');
+      menuBtnSignOut.classList.toggle('display-none');
+    
+      if (listData.classList.contains('display-none')) {
+        listData.classList.remove('display-none');
+      } else {
+        listData.classList.add('display-none');
+      }
+      if (formData.classList.contains('display-none')) {
+        formData.classList.remove('display-none');
+        //enableFixedMenu();
+      } else {
+        formData.innerHTML = '';
+        //disableFixedMenu();
+        formData.classList.add('display-none');
+      }
+    }
+    
+    async function upsertRow(event) {
+      const id = +event.target.name;
+      let range = spreadsheet.range.split('');
+      range = `A${+range[1] + id + 1}`;
+      console.log(range);
+      const response =  await putSpreadsheetData(
+        range, 
+        spreadsheet.spreadsheetId, 
+        Object.values(tempObject)
+        );
+        console.log(response);
     }
   });
-
-  console.log(spreadsheet);
 }
 
-function toggleMenuItem(event) {
-  const id = event.target.id;
-  activeMenuItem(id);
-  updateRoot(id);
+/* function enableFixedMenu() {
+  $('#root')
+    .visibility({
+      once: false,
+      observeChanges: true,
+      onTopPassed: function () {
+        $('.overlay')
+          .visibility({
+            type: 'fixed',
+            offset: 15 // give some space from top of screen
+          });
+      },
+      onTopVisible: restoreMenu,
+    });
 }
 
-function activeMenuItem(id) {
-  const menuItems = document.querySelectorAll('a.item');
-  new Array(...menuItems).every((element) => {
-    if (element.id === id && element.classList.contains('active')) return false;
-    element.id === id ? element.classList.add('active') : element.classList.remove('active');
-    return true;
+function restoreMenu() {
+  $('.overlay').removeClass('fixed');
+  $('.overlay').removeAttr('style');
+  $('.overlay.placeholder').css('display', 'none');
+}
+
+function disableFixedMenu() {
+  restoreMenu();
+  $('#root')
+    .visibility({
+      observeChanges: false,
+    })
+} */
+
+function isLoading(enabled) {
+  const loading = document.getElementById('loading');
+  enabled ? loading.classList.remove('display-none') : loading.classList.add('display-none');
+}
+
+async function createSheet(title) {
+  const spreadsheetBody = {
+    "properties": {
+      "title": title,
+    },
+  };
+  return new Promise((resolve) => {
+    const request = gapi.client.sheets.spreadsheets.create({}, spreadsheetBody);
+    request.then(function (response) {
+      resolve(response.result);
+    }, function (reason) {
+      console.error('error: ' + reason.result.error.message);
+    });
   });
 }
 
-function updateRoot(id) {
-  switch (id) {
-    case 'menu-item-home':
-      toggleRootChildrenDisplay(home.id);
-      break;
-    case 'menu-item-list-data':
-      toggleRootChildrenDisplay(listData.id);
-      listAll();
-      break;
-    case 'menu-item-template':
-      toggleRootChildrenDisplay(template.id);
-      break;
-    case 'menu-item-how-to-use':
-      toggleRootChildrenDisplay(howToUse.id);
-      break;
-  }
-}
+async function getSpreadsheet(spreadsheetId) {
+  const params = {
+    // The spreadsheet to request.
+    spreadsheetId: spreadsheetId,  // TODO: Update placeholder value.
 
-function toggleRootChildrenDisplay(id) {
-  const rootDiv = root.children;
-  new Array(...rootDiv).every((element) => {
-    if (element.id === id && !element.classList.contains('display-none')) return false;
-    element.id === id ? element.classList.remove('display-none') : element.classList.add('display-none');
-    return true;
+    // The ranges to retrieve from the spreadsheet.
+    ranges: [],  // TODO: Update placeholder value.
+
+    // True if grid data should be returned.
+    // This parameter is ignored if a field mask was set in the request.
+    includeGridData: true,  // TODO: Update placeholder value.
+  };
+
+  return new Promise((resolve) => {
+    const request = gapi.client.sheets.spreadsheets.get(params);
+    request.then(function (response) {
+      resolve(response);
+    }, function (reason) {
+      console.error('error: ' + reason.result.error.message);
+    });
   });
 }
 
-function handleClientLoad() {
+async function getSpreadsheetRows(spreadsheetId, range) {
+  return new Promise((resolve, reject) => {
+    gapi.client.sheets.spreadsheets.values.get({
+      spreadsheetId: spreadsheetId,
+      range: range,
+    }).then(function (response) {
+      const range = response.result;
+      if (range.values.length > 0) {
+        resolve(range);
+      } else {
+        appendPre('No data found.');
+      }
+    }, function (response) {
+      appendPre('Error: ' + response.result.error.message);
+    });
+  });
+}
+
+async function putSpreadsheetData(range, spreadsheetId, values) {
+  return new Promise((resolve, reject) => {
+    const params = {
+      spreadsheetId: spreadsheetId,
+      range: range,
+      valueInputOption: 'RAW',
+      includeValuesInResponse: true,
+    }
+
+    const valueRangeBody = {
+      values: [
+        values,
+      ],
+      majorDimension: 'ROWS',
+    };
+    gapi.client.sheets.spreadsheets.values.update(params, valueRangeBody).then(function (response) {
+      resolve(response.result);
+    }, function (response) {
+      appendPre('Error: ' + response.result.error.message);
+    });
+  });
+}
+
+function loadGoogleApi() {
   gapi.load('client:auth2', initClient);
 }
-
 /**
  *  Initializes the API client library and sets up sign-in state
  *  listeners.
@@ -640,243 +904,6 @@ function handleSignInClick(event) {
 function handleSignOutClick(event) {
   gapi.auth2.getAuthInstance().signOut();
   document.location.reload();
-}
-
-
-async function listAll() {
-  isLoading(true);
-  getSpreadsheetData()
-    .then((response) => {
-      objects = response;
-      listNames(response);
-      isLoading(false);
-    })
-    .catch((error) => {
-      error.message;
-      isLoading(false);
-    })
-}
-
-async function getSpreadsheet(spreadsheetId) {
-  const params = {
-    // The spreadsheet to request.
-    spreadsheetId: spreadsheetId,  // TODO: Update placeholder value.
-
-    // The ranges to retrieve from the spreadsheet.
-    ranges: [],  // TODO: Update placeholder value.
-
-    // True if grid data should be returned.
-    // This parameter is ignored if a field mask was set in the request.
-    includeGridData: true,  // TODO: Update placeholder value.
-  };
-
-  return new Promise((resolve) => {
-    const request = gapi.client.sheets.spreadsheets.get(params);
-    request.then(function (response) {
-      resolve(response);
-    }, function (reason) {
-      console.error('error: ' + reason.result.error.message);
-    });
-  });
-}
-
-async function getSpreadsheetData(spreadsheetId, range) {
-  return new Promise((resolve, reject) => {
-    gapi.client.sheets.spreadsheets.values.get({
-      spreadsheetId: spreadsheetId,
-      range: range,
-    }).then(function (response) {
-      const range = response.result;
-      if (range.values.length > 0) {
-        resolve(range);
-      } else {
-        appendPre('No data found.');
-      }
-    }, function (response) {
-      appendPre('Error: ' + response.result.error.message);
-    });
-  });
-}
-
-async function putSpreadsheetData(range, spreadsheetId, values) {
-  return new Promise((resolve, reject) => {
-    const params = {
-      spreadsheetId: spreadsheetId,
-      range: range,
-      valueInputOption: 'RAW',
-      includeValuesInResponse: true,
-    }
-
-    const valueRangeBody = {
-      values: [
-        values,
-      ],
-      majorDimension: 'ROWS',
-    };
-    gapi.client.sheets.spreadsheets.values.update(params, valueRangeBody).then(function (response) {
-      resolve(response.result);
-    }, function (response) {
-      appendPre('Error: ' + response.result.error.message);
-    });
-  });
-}
-
-function arrayToObject(rows) {
-  const rowsObject = [];
-
-  rows.forEach((row, index, array) => {
-    if (index === 0) return;
-    const object = {}
-    row.forEach((value, i) => {
-      object[array[0][i]] = value;
-    })
-    rowsObject.push(object)
-  });
-  return rowsObject;
-}
-
-function listNames(rowsObject) {
-  const list = document.getElementById('list-data');
-  list.innerHTML = ''
-  rowsObject.forEach((value, index) => {
-    const divItem = document.createElement('div');
-    divItem.classList.add('item');
-    list.appendChild(divItem);
-
-    addBtnShow(divItem, index);
-    addCheckbox(divItem, value, index);
-  });
-
-  $('.ui.checkbox').checkbox();
-}
-
-function addCheckbox(divItem, value, index) {
-  const divCheckbox = document.createElement('div');
-  divCheckbox.classList.add('content');
-  divItem.appendChild(divCheckbox);
-
-  const checkboxContainer = document.createElement('div');
-  checkboxContainer.classList.add('ui', 'checkbox');
-  divCheckbox.appendChild(checkboxContainer);
-
-  const checkbox = document.createElement('input');
-  checkbox.type = 'checkbox';
-  checkbox.name = 'nomes';
-  checkbox.id = `chk-${index}`;
-  checkboxContainer.appendChild(checkbox);
-
-  const label = document.createElement('label');
-  label.textContent = value['Nome'];
-  label.classList.add('header');
-  checkboxContainer.appendChild(label);
-}
-
-function addBtnShow(divItem, index) {
-  const btnContainer = document.createElement('div');
-  btnContainer.classList.add('right', 'floated', 'content');
-  divItem.appendChild(btnContainer);
-
-  const buttonShow = document.createElement('div');
-  buttonShow.classList.add('ui', 'button');
-  buttonShow.id = `btn-${index}`;
-  buttonShow.textContent = "Mostrar dados";
-  btnContainer.appendChild(buttonShow);
-
-  buttonShow.onclick = showData;
-}
-
-function showData(event) {
-  const id = event.target.id.match(regNumbers)[0];
-  console.log(id);
-  tempObject = Object.assign({}, objects[id]);
-  Object.entries(tempObject).forEach((item) => {
-    createInput(id, 'text', item);
-  });
-  toggleFormOrList();
-}
-
-function createInput(objId, type, entries) {
-  const field = document.createElement('div');
-  field.className = 'field';
-  const input = document.createElement('input');
-  input.id = `${objId}-${entries[0]}`;
-  input.type = type;
-  input.value = entries[1];
-  const label = document.createElement('label');
-  label.htmlFor = input.id;
-  label.textContent = entries[0];
-
-  input.oninput = updateValue;
-
-  field.appendChild(label);
-  field.appendChild(input);
-  formData.appendChild(field);
-}
-
-function updateValue(event) {
-  // const index = event.target.id.match(rBeforeHyphen)[0];
-  const key = event.target.id.match(regAfterHyphen)[0];
-  tempObject[key] = event.target.value;
-}
-
-function toggleFormOrList() {
-  menuBtnCancel.classList.toggle('display-none');
-  menuBtnSave.classList.toggle('display-none');
-  menuBtnSignOut.classList.toggle('display-none');
-
-  if (listData.classList.contains('display-none')) {
-    listData.classList.remove('display-none');
-  } else {
-    listData.classList.add('display-none');
-  }
-  if (formData.classList.contains('display-none')) {
-    formData.classList.remove('display-none');
-    enableFixedMenu();
-  } else {
-    formData.innerHTML = '';
-    disableFixedMenu();
-    formData.classList.add('display-none');
-  }
-}
-
-async function saveData(event) {
-  const response = await putSpreadsheetData();
-  console.log(response.status);
-}
-
-function enableFixedMenu() {
-  $('#root')
-    .visibility({
-      once: false,
-      observeChanges: true,
-      onTopPassed: function () {
-        $('.overlay')
-          .visibility({
-            type: 'fixed',
-            offset: 15 // give some space from top of screen
-          });
-      },
-      onTopVisible: restoreMenu,
-    });
-}
-
-function restoreMenu() {
-  $('.overlay').removeClass('fixed');
-  $('.overlay').removeAttr('style');
-  $('.overlay.placeholder').css('display', 'none');
-}
-
-function disableFixedMenu() {
-  restoreMenu();
-  $('#root')
-    .visibility({
-      observeChanges: false,
-    })
-}
-
-function isLoading(enabled) {
-  const loading = document.getElementById('loading');
-  enabled ? loading.classList.remove('display-none') : loading.classList.add('display-none');
 }
 
 

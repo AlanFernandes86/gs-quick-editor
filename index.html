@@ -16,68 +16,14 @@
 <body>
 
   <!-- MENU -->
-  <header class="overlay">
-    <div class="ui menu container">
-      <div class="header item">
-        <i class="notched circle loading icon display-none" id="loading"></i>
-        GS Quick Editor
-      </div>
-      <a class="item active" id="menu-item-home">
-        Home
-      </a>
-      <a class="item" id="menu-item-list-data">
-        Listar dados
-      </a>
-      <a class="item" id="menu-item-template">
-        Template
-      </a>
-      <div class="right menu">
-        <a class="item" id="menu-item-how-to-use">
-          Modo de usar
-        </a>
-        <div class="item top-menu display-none" id="menu-btn-cancel">
-          <button class="ui compact button negative">
-            <i class="times circle outline icon"></i>
-            Cancelar
-          </button>
-        </div>
-        <!-- <div class="item top-menu">
-               <button class="ui compact button primary" id="menu-btn-back">
-                 <i class="arrow circle left icon"></i>
-                 Voltar
-               </button>
-             </div> -->
-        <div class="item top-menu display-none" id="menu-btn-save">
-          <button class="ui compact button positive">
-            <i class="save icon"></i>
-            Salvar
-          </button>
-        </div>
-        <div class="item top-menu display-none" id="menu-btn-sign-in">
-          <button class="ui compact button primary">
-            <i class="sign-in icon"></i>
-            Sign In
-          </button>
-        </div>
-        <div class="item top-menu display-none" id="menu-btn-sign-out">
-          <button class="ui compact button secondary">
-            <i class="sign-out icon"></i>
-            Sign Out
-          </button>
-        </div>
-      </div>
-    </div>
-  </header>
+  <header class="overlay" id="menu"></header>
 
   <main id="root" class="ui container segment">
     <!-- HOME -->
     <div class="ui" id="home">HOME</div>
 
-    <!-- LISTAR DADOS -->
-    <div class="ui middle aligned divided list display-none" id="list-data">LISTA</div>
-
-    <!-- MOSTRAR DADOS -->
-    <div class="ui form display-none" id="form-data">FORM</div>
+    <!-- LISTAR -->
+    <div class="ui display-none" id="list">LISTA</div>
 
     <!-- TEMPLATE -->
     <div class="ui display-none" id="template">TEMPLATE</div>
