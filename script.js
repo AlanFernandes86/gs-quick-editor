@@ -507,7 +507,9 @@ function loadHome() {
           putSpreadsheetData('A1', state.getSpreadsheet().spreadsheetId, state.getSpreadsheet().values[0])
             .then((result) => {
               state.getSpreadsheet().values = result.updatedData.values;
-              state.getSpreadsheet().range = result.updatedData.range;
+
+              state.getSpreadsheet().range = result.updatedData.range.replace(/[0-9]$/, '');
+
               insertLocalSheet();
               loadSpreadsheetsTable();
 
@@ -668,6 +670,8 @@ function loadList() {
         divItem.classList.add('item');
         list.appendChild(divItem);
 
+        console.log(value);
+        console.log(state.getSpreadsheet().mainColumn);
         addBtnShow(divItem, index);
         addCheckbox(divItem, value, index);
       });
@@ -691,7 +695,7 @@ function loadList() {
       checkboxContainer.appendChild(checkbox);
 
       const label = document.createElement('label');
-      label.textContent = value['Nome'];
+      label.textContent = value[state.getSpreadsheet().mainColumn];
       label.classList.add('header');
       checkboxContainer.appendChild(label);
     }
@@ -716,6 +720,7 @@ function loadList() {
         createInput(id, 'text', item);
       });
       toggleFormOrList();
+      
       btnSave.name = id;
     }
 
@@ -766,7 +771,8 @@ function loadList() {
     async function upsertRow(event) {
       const id = +event.target.name;
       let range = state.getSpreadsheet().range.split('');
-      range = `A${+range[1] + id + 1}`;
+      console.log(range);
+      range = `A${+range[range.length-3] + id + 1}`;
       console.log(range);
       const response = await putSpreadsheetData(
         range,
