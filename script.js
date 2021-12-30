@@ -55,7 +55,7 @@ const state = (() => {
       if (spreadsheets) {
         state.deactivateAllSpreadsheets();
       }
-      spreadsheets.push({ spreadsheet ,  active: true });
+      spreadsheets.push({ spreadsheet, active: true });
     },
     removeSpreadsheetOfSpreadsheetList: (index) => {
       if (spreadsheets[index].active && spreadsheets.length > 1) {
@@ -88,6 +88,7 @@ window.onload = () => {
   }
   loadMenu();
   loadGoogleApi();
+  
 }
 
 function appendPre(message) {
@@ -217,6 +218,13 @@ function loadHome() {
       setActions(index);
     })
 
+    function setActions(step) {
+      const homeStep = homeSteps[step];
+      homeStep.actions.forEach((action, index) => {
+        document.getElementById(`btn-${step}-${index}`).onclick = action;
+      });
+    }
+
     document.querySelectorAll('.step').forEach((step) => {
       step.onclick = bottomStepsToggle;
     })
@@ -243,12 +251,6 @@ function loadHome() {
       toggleSteps(from, to);
     }
 
-    function setActions(step) {
-      const homeStep = homeSteps[step];
-      homeStep.actions.forEach((action, index) => {
-        document.getElementById(`btn-${step}-${index}`).onclick = action;
-      });
-    }
 
     function reloadHome() {
       home.innerHTML = '';
@@ -720,7 +722,7 @@ function loadList() {
         createInput(id, 'text', item);
       });
       toggleFormOrList();
-      
+
       btnSave.name = id;
     }
 
@@ -772,7 +774,7 @@ function loadList() {
       const id = +event.target.name;
       let range = state.getSpreadsheet().range.split('');
       console.log(range);
-      range = `A${+range[range.length-3] + id + 1}`;
+      range = `A${+range[range.length - 3] + id + 1}`;
       console.log(range);
       const response = await putSpreadsheetData(
         range,
@@ -864,6 +866,7 @@ async function getSpreadsheetRows(spreadsheetId, range) {
       spreadsheetId: spreadsheetId,
       range: range,
     }).then(function (response) {
+      console.log(response);
       const range = response.result;
       if (range.values.length > 0) {
         resolve(range);
@@ -909,7 +912,7 @@ function loadGoogleApi() {
 function initClient() {
   const API_KEY = 'AIzaSyCFZjHEVeI9QgwCARRcEzW5pdJ_GGyvCGQ';
   const DISCOVERY_DOCS = ['https://sheets.googleapis.com/$discovery/rest?version=v4'];
-  const SCOPES = 'https://www.googleapis.com/auth/spreadsheets';
+  const SCOPES = 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive';
   const CLIENT_ID = '1074659725945-evslt5efu5blhquu7404fr95op7jv7ua.apps.googleusercontent.com';
 
   gapi.client.init({
@@ -931,6 +934,11 @@ function updateSignInStatus(isSignedIn) {
     pre.innerHTML = '';
     root.classList.remove('display-none');
     pre.classList.add('display-none');
+    gapi.client.load('drive', 'v3')
+    .then(() => { 
+      execute();
+      getId();
+    });
   } else {
     root.classList.add('display-none');
     appendPre('Você não está autenticado! Favor clicar no botão "Sign In" no menu superior.\n'
@@ -956,6 +964,28 @@ function handleSignInClick(event) {
 function handleSignOutClick(event) {
   gapi.auth2.getAuthInstance().signOut();
   document.location.reload();
+}
+
+// Make sure the client is loaded and sign-in is complete before calling this method.
+function execute() {
+  return gapi.client.drive.files.list({
+    pageSize: 1000,
+  })
+    .then(function (response) {
+      // Handle the results here (response.result has the parsed body).
+      console.log("Response", response);
+    },
+      function (err) { console.error("Execute error", err); });
+}
+
+function getId() {
+  return gapi.client.drive.files.get({
+    fileId: '1OGgKc6PxTXcJ4dR55hxp3m_CnxpbeARN',
+    fields: 'webContentLink',
+  }).then((response) => {
+    //document.getElementById('img').src = response.result.webContentLink;
+    console.log(response);
+  });
 }
 
 
