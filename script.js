@@ -8,16 +8,81 @@ const pre = document.getElementById('error');
 const regNumbers = /[0-9]+/g;
 const regBeforeHyphen = /[^\-]*/;
 const regAfterHyphen = /[a-zA-Zà-úÀ-Ú0-9º \.]+$/g;
-const alphabetUp = "abcdefghijklmnopqrstuvwxyz".toUpperCase().split("");
+const alphabetUp = 'abcdefghijklmnopqrstuvwxyz'.toUpperCase().split('');
 
-let spreadsheets = [];
-let spreadsheet = {};
-let objects = [];
-let tempObject = {};
+// https://developer.mozilla.org/pt-BR/docs/Glossary/IIFE
+const state = (() => {
+  let spreadsheets = [];
+  let spreadsheet = {};
+  let objects = [];
+  let tempObject = {};
+
+  return {
+    getSpreadsheetsList: () => spreadsheets,
+    getActiveSpreadsheet: () => {
+      const temp = spreadsheets.find((spreadsheet) => spreadsheet.active) || {};
+      spreadsheet = temp.spreadsheet || {};
+      if (Object.keys(spreadsheet).length === 0) return false;
+      return spreadsheet;
+    },
+    setSpreadsheetsList: (value) => {
+      spreadsheets = value;
+      return spreadsheets;
+    },
+    deactivateAllSpreadsheets: () => {
+      spreadsheets.forEach((spreadsheet) => spreadsheet.active = false);
+      spreadsheet = {};
+    },
+    setActiveSpreadsheet: (index) => {
+      spreadsheets.forEach((spreadsheet, i) => {
+        if (index === i) {
+          spreadsheet.active = true;
+          spreadsheets.splice(i, 1);
+          spreadsheets.splice(0, 0, spreadsheet);
+        } else {
+          spreadsheet.active = false;
+        }
+      });
+    },
+    getSpreadsheet: () => spreadsheet,
+    setSpreadsheet: (value) => {
+      spreadsheet = value;
+      return spreadsheet;
+    },
+    addSpreadsheetInSpreadsheetList: () => {
+      if (spreadsheets) {
+        state.deactivateAllSpreadsheets();
+      }
+      spreadsheets.push({ spreadsheet, active: true });
+    },
+    removeSpreadsheetOfSpreadsheetList: (index) => {
+      if (spreadsheets[index].active && spreadsheets.length > 1) {
+        spreadsheets.splice(index, 1);
+        spreadsheets[0].active = true;
+      } else {
+        spreadsheets.splice(index, 1);
+      }
+    },
+    getSheetObjects: () => objects,
+    setSheetObjects: (value) => {
+      objects = value;
+      return objects;
+    },
+    getTempObject: () => tempObject,
+    setTempObject: (id) => {
+      tempObject = Object.assign({}, objects[id]);
+      return tempObject;
+    },
+    updateTempObject: (key, value) => {
+      tempObject[key] = value;
+      return tempObject;
+    }
+  }
+})();
 
 window.onload = () => {
   if (localStorage.getItem('spreadsheets')) {
-    spreadsheets = JSON.parse(localStorage.getItem('spreadsheets'));
+    state.setSpreadsheetsList(JSON.parse(localStorage.getItem('spreadsheets')));
   }
   loadMenu();
   loadGoogleApi();
@@ -39,12 +104,13 @@ let menuBtnSignIn = undefined;
 let menuBtnSignOut = undefined;
 function loadMenu() {
   $('#menu').load('menu.html', () => {
+
     const menuContainer = document.querySelector('.ui.menu.container');
     const mMenuBtnSignIn = document.getElementById('menu-btn-sign-in');
     const mMenuBtnSignOut = document.getElementById('menu-btn-sign-out');
 
     menuBtnSignIn = mMenuBtnSignIn;
-    menuBtnSignOut = mMenuBtnSignOut;    
+    menuBtnSignOut = mMenuBtnSignOut;
 
     mMenuBtnSignIn.onclick = handleSignInClick;
     mMenuBtnSignOut.onclick = handleSignOutClick;
@@ -55,7 +121,7 @@ function loadMenu() {
       activeMenuItem(id);
       updateRoot(id);
     }
-    
+
     function activeMenuItem(id) {
       const menuItems = document.querySelectorAll('a.item');
       new Array(...menuItems).every((element) => {
@@ -64,7 +130,7 @@ function loadMenu() {
         return true;
       });
     }
-    
+
     function updateRoot(id) {
       switch (id) {
         case 'menu-item-home':
@@ -73,7 +139,7 @@ function loadMenu() {
           break;
         case 'menu-item-list-data':
           toggleRootChildrenDisplay(list.id);
-          loadList()
+          loadList();
           break;
         case 'menu-item-template':
           toggleRootChildrenDisplay(template.id);
@@ -83,7 +149,7 @@ function loadMenu() {
           break;
       }
     }
-    
+
     function toggleRootChildrenDisplay(id) {
       const rootDiv = root.children;
       new Array(...rootDiv).every((element) => {
@@ -104,7 +170,7 @@ function loadHome() {
     let columnIndex = 0;
 
     const inputNewSheetTitle = document.getElementById('new-sheet-title');
-    inputNewSheetTitle.oninput = (event) => spreadsheet.title = event.target.value;
+    inputNewSheetTitle.oninput = (event) => state.getSpreadsheet().title = event.target.value;
 
     const inputNewColumnTitle = document.getElementById('new-column-title');
     inputNewColumnTitle.onkeyup = (event) => {
@@ -154,8 +220,7 @@ function loadHome() {
     })
 
     function handleHome() {
-      if (spreadsheets && spreadsheets.length > 0 && spreadsheets.some((spreadsheet) => spreadsheet.active)) {
-        spreadsheet = spreadsheets.find((spreadsheet) => spreadsheet.active).spreadsheet;
+      if (state.getActiveSpreadsheet()) {
         loadSpreadsheetsTable();
         toggleSteps(0, 4);
       };
@@ -197,10 +262,7 @@ function loadHome() {
         checkIcon.classList.remove('green');
       }
       if (to === 0) {
-        spreadsheet = {}
-        spreadsheets.forEach((spreadsheet) => {
-          spreadsheet.active = false;
-        });
+        state.deactivateAllSpreadsheets();
         reloadHome();
       } else {
         homeSteps[from].element.classList.add('display-none');
@@ -243,7 +305,7 @@ function loadHome() {
 
     function setSheetTitle() {
       const btn1Zero = document.getElementById('btn-1-0');
-      if (spreadsheet.title !== '' && spreadsheet.title) {
+      if (inputNewSheetTitle.value !== '') {
         insertLeftCornerLabel(inputNewSheetTitle, 'check', 'green', 'disabled')
         btn1Zero.classList.add('disabled');
         document.getElementById('add-column-title').classList.remove('display-none');
@@ -321,7 +383,7 @@ function loadHome() {
     }
 
     function saveColumnsAndGo() {
-      spreadsheet.values = [columnList.map((column) => column.title)];
+      state.getSpreadsheet.values = [columnList.map((column) => column.title)];
       setSelectedColumnOptions();
       toggleSteps(...navigation.createSheetToMainColumn);
     }
@@ -329,7 +391,7 @@ function loadHome() {
     function setSelectedColumnOptions() {
       selectColumns.innerHTML = '<option value="">Colunas</option>';
       $('.ui.dropdown').dropdown();
-      const values = spreadsheet.values[0];
+      const values = state.getSpreadsheet.values[0];
       values.forEach((value) => {
         const option = document.createElement('option');
         option.value = value;
@@ -348,7 +410,7 @@ function loadHome() {
           : btn3One.classList.remove('display-none');
         btn3Zero.classList.add('disabled');
         warningContainer.classList.add('display-none');
-        spreadsheet.mainColumn = selectColumns.value;
+        state.getSpreadsheet.mainColumn = selectColumns.value;
       } else {
         warningContainer.classList.remove('display-none');
       }
@@ -367,9 +429,9 @@ function loadHome() {
         getSpreadsheet(spreadsheetId).then((response) => {
           if (response.status === 200) {
             insertLeftCornerLabel(input, 'check', 'green', 'enabled');
-            spreadsheet.title = response.result.properties.title;
-            spreadsheet.spreadsheetUrl = response.result.spreadsheetUrl;
-            spreadsheet.spreadsheetId = response.result.spreadsheetId;
+            state.getSpreadsheet.title = response.result.properties.title;
+            state.getSpreadsheet.spreadsheetUrl = response.result.spreadsheetUrl;
+            state.getSpreadsheet.spreadsheetId = response.result.spreadsheetId;
             loadIndexRowsSelect(response.result.sheets[0].data[0].rowData);
           }
           event.target.classList.remove('loading');
@@ -406,8 +468,8 @@ function loadHome() {
         rowData[select.value].values.forEach((value, index) => {
           value.formattedValue ? values.push(value.formattedValue) : values.push('');
         });
-        spreadsheet.values = [values];
-        spreadsheet.range = findRange(+select.value + 1, values.length);
+        state.getSpreadsheet.values = [values];
+        state.getSpreadsheet.range = findRange(+select.value + 1, values.length);
         setSelectedColumnOptions();
         toggleSteps(...navigation.existingSheetToMainColumn);
       };
@@ -434,14 +496,14 @@ function loadHome() {
 
     function createSpreadsheet(event) {
       event.target.classList.add('loading');
-      createSheet(spreadsheet.title)
+      createSheet(state.getSpreadsheet.title)
         .then((result) => {
-          spreadsheet.spreadsheetId = result.spreadsheetId;
-          spreadsheet.spreadsheetUrl = result.spreadsheetUrl;
-          putSpreadsheetData('A1', spreadsheet.spreadsheetId, spreadsheet.values[0])
+          state.getSpreadsheet.spreadsheetId = result.spreadsheetId;
+          state.getSpreadsheet.spreadsheetUrl = result.spreadsheetUrl;
+          putSpreadsheetData('A1', state.getSpreadsheet.spreadsheetId, state.getSpreadsheet.values[0])
             .then((result) => {
-              spreadsheet.values = result.updatedData.values;
-              spreadsheet.range = result.updatedData.range;
+              state.getSpreadsheet.values = result.updatedData.values;
+              state.getSpreadsheet.range = result.updatedData.range;
 
               insertLocalSheet();
               loadSpreadsheetsTable();
@@ -460,49 +522,29 @@ function loadHome() {
     }
 
     function insertLocalSheet() {
-      if (spreadsheets) {
-        spreadsheets.forEach((spreadsheet) => {
-          spreadsheet.active = false;
-        });
-      }
-      spreadsheets.push({ spreadsheet, active: true });
+      state.addSpreadsheetInSpreadsheetList();
       updateLocalStorage();
     }
 
     function removeLocalSheet(index) {
-
-      if (spreadsheets[index].active && spreadsheets.length > 1) {
-        spreadsheets.splice(index, 1);
-        spreadsheets[0].active = true;
-      } else {
-        spreadsheets.splice(index, 1);
-      }
-
+      state.removeSpreadsheetOfSpreadsheetList(index);
       updateLocalStorage();
       reloadHome();
     }
 
-    function selectActiveSheet(index) {
-      spreadsheets.forEach((spreadsheet, i) => {
-        if (index === i) {
-          spreadsheet.active = true;
-          spreadsheets.splice(i, 1);
-          spreadsheets.splice(0, 0, spreadsheet);
-        } else {
-          spreadsheet.active = false;
-        }
-      });
+    function selectSpreadsheet(index) {
+      state.setActiveSpreadsheet(index);
       updateLocalStorage();
       reloadHome();
     }
 
     function updateLocalStorage() {
-      localStorage.setItem('spreadsheets', JSON.stringify(spreadsheets));
+      localStorage.setItem('spreadsheets', JSON.stringify(state.getSpreadsheetsList()));
     }
 
     function loadSpreadsheetsTable() {
       const tbody = document.getElementById('tbody-data');
-      spreadsheets.forEach((spreadsheet, index) => {
+      state.getSpreadsheetsList().forEach((spreadsheet, index) => {
 
         const tr = document.createElement('tr');
 
@@ -566,13 +608,15 @@ function loadHome() {
 
     function setSelectedSpreadsheet(event) {
       const id = +event.target.id.match(regAfterHyphen)[0];
-      selectActiveSheet(id);
+      selectSpreadsheet(id);
     }
   });
 }
 
 function loadList() {
   $('#list').load('list.html', () => {
+
+    console.log(state.getSpreadsheet);
 
     const listData = document.getElementById('list-data');
     const formData = document.getElementById('form-data');
@@ -582,15 +626,15 @@ function loadList() {
 
     menuBtnCancel.onclick = toggleFormOrList;
     btnSave.onclick = upsertRow;
-      
+
     listRows();
 
     async function listRows() {
       isLoading(true);
-      getSpreadsheetRows(spreadsheet.spreadsheetId, spreadsheet.range)
+      getSpreadsheetRows(state.getSpreadsheet.spreadsheetId, state.getSpreadsheet.range)
         .then((result) => {
-          objects = arrayToObject(result.values);
-          listNames(objects);
+          console.log(result);
+          listNames(state.setSheetObjects(arrayToObject(result.values)));
           isLoading(false);
         })
         .catch((error) => {
@@ -598,10 +642,10 @@ function loadList() {
           isLoading(false);
         })
     }
-    
+
     function arrayToObject(rows) {
       const rowsObject = [];
-    
+
       rows.forEach((row, index, array) => {
         if (index === 0) return;
         const object = {}
@@ -612,7 +656,7 @@ function loadList() {
       });
       return rowsObject;
     }
-    
+
     function listNames(rowsObject) {
       const list = document.getElementById('list-data');
       list.innerHTML = ''
@@ -620,59 +664,58 @@ function loadList() {
         const divItem = document.createElement('div');
         divItem.classList.add('item');
         list.appendChild(divItem);
-    
+
         addBtnShow(divItem, index);
         addCheckbox(divItem, value, index);
       });
-    
+
       $('.ui.checkbox').checkbox();
     }
-    
+
     function addCheckbox(divItem, value, index) {
       const divCheckbox = document.createElement('div');
       divCheckbox.classList.add('content');
       divItem.appendChild(divCheckbox);
-    
+
       const checkboxContainer = document.createElement('div');
       checkboxContainer.classList.add('ui', 'checkbox');
       divCheckbox.appendChild(checkboxContainer);
-    
+
       const checkbox = document.createElement('input');
       checkbox.type = 'checkbox';
       checkbox.name = 'nomes';
       checkbox.id = `chk-${index}`;
       checkboxContainer.appendChild(checkbox);
-    
+
       const label = document.createElement('label');
       label.textContent = value['Nome'];
       label.classList.add('header');
       checkboxContainer.appendChild(label);
     }
-    
+
     function addBtnShow(divItem, index) {
       const btnContainer = document.createElement('div');
       btnContainer.classList.add('right', 'floated', 'content');
       divItem.appendChild(btnContainer);
-    
+
       const buttonShow = document.createElement('div');
       buttonShow.classList.add('ui', 'button');
       buttonShow.id = `btn-${index}`;
-      buttonShow.textContent = "Mostrar dados";
+      buttonShow.textContent = 'Mostrar dados';
       btnContainer.appendChild(buttonShow);
-    
+
       buttonShow.onclick = showData;
     }
-    
+
     function showData(event) {
       const id = event.target.id.match(regNumbers)[0];
-      tempObject = Object.assign({}, objects[id]);
-      Object.entries(tempObject).forEach((item) => {
+      Object.entries(state.setTempObject(id)).forEach((item) => {
         createInput(id, 'text', item);
       });
       toggleFormOrList();
       btnSave.name = id;
     }
-    
+
     function createInput(objId, type, entries) {
       const field = document.createElement('div');
       field.className = 'field';
@@ -683,25 +726,25 @@ function loadList() {
       const label = document.createElement('label');
       label.htmlFor = input.id;
       label.textContent = entries[0];
-    
+
       input.oninput = updateValue;
-    
+
       field.appendChild(label);
       field.appendChild(input);
       formData.appendChild(field);
     }
-    
+
     function updateValue(event) {
       // const index = event.target.id.match(rBeforeHyphen)[0];
       const key = event.target.id.match(regAfterHyphen)[0];
-      tempObject[key] = event.target.value;
+      state.updateTempObject(key, event.target.value);
     }
-    
+
     function toggleFormOrList() {
       menuBtnCancel.classList.toggle('display-none');
       menuBtnSave.classList.toggle('display-none');
       menuBtnSignOut.classList.toggle('display-none');
-    
+
       if (listData.classList.contains('display-none')) {
         listData.classList.remove('display-none');
       } else {
@@ -716,18 +759,18 @@ function loadList() {
         formData.classList.add('display-none');
       }
     }
-    
+
     async function upsertRow(event) {
       const id = +event.target.name;
-      let range = spreadsheet.range.split('');
+      let range = state.getSpreadsheet.range.split('');
       range = `A${+range[1] + id + 1}`;
       console.log(range);
-      const response =  await putSpreadsheetData(
-        range, 
-        spreadsheet.spreadsheetId, 
-        Object.values(tempObject)
-        );
-        console.log(response);
+      const response = await putSpreadsheetData(
+        range,
+        state.getSpreadsheet.spreadsheetId,
+        Object.values(state.getTempObject())
+      );
+      console.log(response);
     }
   });
 }
@@ -769,8 +812,8 @@ function isLoading(enabled) {
 
 async function createSheet(title) {
   const spreadsheetBody = {
-    "properties": {
-      "title": title,
+    'properties': {
+      'title': title,
     },
   };
   return new Promise((resolve) => {
