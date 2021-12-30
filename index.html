@@ -2,12 +2,14 @@
 <html>
 
 <head>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" />
   <title>Quick Editor</title>
-  <meta charset="utf-8" />
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://code.jquery.com/jquery-3.1.1.min.js"
-    integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous" defer></script>
+  integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js" defer></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" />
   <link rel="stylesheet" href="style.css">
   <script src="script.js" defer></script>
   <script async defer src="https://apis.google.com/js/api.js"> </script>
@@ -16,7 +18,7 @@
 <body>
 
   <!-- MENU -->
-  <header class="overlay" id="menu"></header>
+  <header class="" id="menu"></header>
 
   <main id="root" class="ui container segment">
     <!-- HOME -->
@@ -32,13 +34,12 @@
     <div class="ui display-none" id="how-to-use">MODO DE USAR</div>
 
   </main>
-
+  <img id="img" width="200">
   <!-- ERROR MESSAGE -->
   <pre class="ui warning message container display-none" id="error"></pre>
 
   <footer class="ui segment"><em>Alan Fernandes / Dezembro - 2021</em></footer>
 
-  </script>
 </body>
 
 </html>

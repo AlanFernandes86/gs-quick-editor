@@ -937,7 +937,6 @@ function updateSignInStatus(isSignedIn) {
     gapi.client.load('drive', 'v3')
     .then(() => { 
       execute();
-      getId();
     });
   } else {
     root.classList.add('display-none');
@@ -968,25 +967,18 @@ function handleSignOutClick(event) {
 
 // Make sure the client is loaded and sign-in is complete before calling this method.
 function execute() {
-  return gapi.client.drive.files.list({
+  gapi.client.drive.files.list({
     pageSize: 1000,
   })
     .then(function (response) {
       // Handle the results here (response.result has the parsed body).
-      console.log("Response", response);
-    },
-      function (err) { console.error("Execute error", err); });
+      console.log(response);
+      return gapi.client.drive.files.get({
+        fileId: response.result.files[153].id,
+        fields: 'webContentLink',
+      }).then((response) => {
+        document.getElementById('img').src = response.result.webContentLink;
+        console.log(response);
+      });
+    },function (err) { console.error("Execute error", err); });
 }
-
-function getId() {
-  return gapi.client.drive.files.get({
-    fileId: '1OGgKc6PxTXcJ4dR55hxp3m_CnxpbeARN',
-    fields: 'webContentLink',
-  }).then((response) => {
-    //document.getElementById('img').src = response.result.webContentLink;
-    console.log(response);
-  });
-}
-
-
-
