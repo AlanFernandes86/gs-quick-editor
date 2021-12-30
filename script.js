@@ -31,6 +31,8 @@ const state = (() => {
     },
     deactivateAllSpreadsheets: () => {
       spreadsheets.forEach((spreadsheet) => spreadsheet.active = false);
+    },
+    clearSpreadsheet: () => {
       spreadsheet = {};
     },
     setActiveSpreadsheet: (index) => {
@@ -53,7 +55,7 @@ const state = (() => {
       if (spreadsheets) {
         state.deactivateAllSpreadsheets();
       }
-      spreadsheets.push({ spreadsheet, active: true });
+      spreadsheets.push({ spreadsheet ,  active: true });
     },
     removeSpreadsheetOfSpreadsheetList: (index) => {
       if (spreadsheets[index].active && spreadsheets.length > 1) {
@@ -263,6 +265,7 @@ function loadHome() {
       }
       if (to === 0) {
         state.deactivateAllSpreadsheets();
+        state.clearSpreadsheet();
         reloadHome();
       } else {
         homeSteps[from].element.classList.add('display-none');
@@ -383,7 +386,7 @@ function loadHome() {
     }
 
     function saveColumnsAndGo() {
-      state.getSpreadsheet.values = [columnList.map((column) => column.title)];
+      state.getSpreadsheet().values = [columnList.map((column) => column.title)];
       setSelectedColumnOptions();
       toggleSteps(...navigation.createSheetToMainColumn);
     }
@@ -391,7 +394,7 @@ function loadHome() {
     function setSelectedColumnOptions() {
       selectColumns.innerHTML = '<option value="">Colunas</option>';
       $('.ui.dropdown').dropdown();
-      const values = state.getSpreadsheet.values[0];
+      const values = state.getSpreadsheet().values[0];
       values.forEach((value) => {
         const option = document.createElement('option');
         option.value = value;
@@ -410,7 +413,7 @@ function loadHome() {
           : btn3One.classList.remove('display-none');
         btn3Zero.classList.add('disabled');
         warningContainer.classList.add('display-none');
-        state.getSpreadsheet.mainColumn = selectColumns.value;
+        state.getSpreadsheet().mainColumn = selectColumns.value;
       } else {
         warningContainer.classList.remove('display-none');
       }
@@ -429,9 +432,9 @@ function loadHome() {
         getSpreadsheet(spreadsheetId).then((response) => {
           if (response.status === 200) {
             insertLeftCornerLabel(input, 'check', 'green', 'enabled');
-            state.getSpreadsheet.title = response.result.properties.title;
-            state.getSpreadsheet.spreadsheetUrl = response.result.spreadsheetUrl;
-            state.getSpreadsheet.spreadsheetId = response.result.spreadsheetId;
+            state.getSpreadsheet().title = response.result.properties.title;
+            state.getSpreadsheet().spreadsheetUrl = response.result.spreadsheetUrl;
+            state.getSpreadsheet().spreadsheetId = response.result.spreadsheetId;
             loadIndexRowsSelect(response.result.sheets[0].data[0].rowData);
           }
           event.target.classList.remove('loading');
@@ -468,8 +471,8 @@ function loadHome() {
         rowData[select.value].values.forEach((value, index) => {
           value.formattedValue ? values.push(value.formattedValue) : values.push('');
         });
-        state.getSpreadsheet.values = [values];
-        state.getSpreadsheet.range = findRange(+select.value + 1, values.length);
+        state.getSpreadsheet().values = [values];
+        state.getSpreadsheet().range = findRange(+select.value + 1, values.length);
         setSelectedColumnOptions();
         toggleSteps(...navigation.existingSheetToMainColumn);
       };
@@ -496,15 +499,15 @@ function loadHome() {
 
     function createSpreadsheet(event) {
       event.target.classList.add('loading');
-      createSheet(state.getSpreadsheet.title)
+      createSheet(state.getSpreadsheet().title)
         .then((result) => {
-          state.getSpreadsheet.spreadsheetId = result.spreadsheetId;
-          state.getSpreadsheet.spreadsheetUrl = result.spreadsheetUrl;
-          putSpreadsheetData('A1', state.getSpreadsheet.spreadsheetId, state.getSpreadsheet.values[0])
-            .then((result) => {
-              state.getSpreadsheet.values = result.updatedData.values;
-              state.getSpreadsheet.range = result.updatedData.range;
+          state.getSpreadsheet().spreadsheetId = result.spreadsheetId;
+          state.getSpreadsheet().spreadsheetUrl = result.spreadsheetUrl;
 
+          putSpreadsheetData('A1', state.getSpreadsheet().spreadsheetId, state.getSpreadsheet().values[0])
+            .then((result) => {
+              state.getSpreadsheet().values = result.updatedData.values;
+              state.getSpreadsheet().range = result.updatedData.range;
               insertLocalSheet();
               loadSpreadsheetsTable();
 
@@ -616,7 +619,7 @@ function loadHome() {
 function loadList() {
   $('#list').load('list.html', () => {
 
-    console.log(state.getSpreadsheet);
+    console.log(state.getSpreadsheet());
 
     const listData = document.getElementById('list-data');
     const formData = document.getElementById('form-data');
@@ -631,7 +634,7 @@ function loadList() {
 
     async function listRows() {
       isLoading(true);
-      getSpreadsheetRows(state.getSpreadsheet.spreadsheetId, state.getSpreadsheet.range)
+      getSpreadsheetRows(state.getSpreadsheet().spreadsheetId, state.getSpreadsheet().range)
         .then((result) => {
           console.log(result);
           listNames(state.setSheetObjects(arrayToObject(result.values)));
@@ -762,12 +765,12 @@ function loadList() {
 
     async function upsertRow(event) {
       const id = +event.target.name;
-      let range = state.getSpreadsheet.range.split('');
+      let range = state.getSpreadsheet().range.split('');
       range = `A${+range[1] + id + 1}`;
       console.log(range);
       const response = await putSpreadsheetData(
         range,
-        state.getSpreadsheet.spreadsheetId,
+        state.getSpreadsheet().spreadsheetId,
         Object.values(state.getTempObject())
       );
       console.log(response);
