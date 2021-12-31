@@ -114,7 +114,7 @@ function appendPre(message) {
 let menuBtnSignIn = undefined;
 let menuBtnSignOut = undefined;
 function loadMenu() {
-  $('#menu').load('../../menu.html', () => {
+  $('#menu').load('./menu.html', () => {
 
     const menuContainer = document.querySelector('.ui.menu.container');
     const mMenuBtnSignIn = document.getElementById('menu-btn-sign-in');
@@ -175,7 +175,7 @@ function loadMenu() {
 }
 
 function loadHome() {
-  $('#home').load('../../home.html', () => {
+  $('#home').load('./home.html', () => {
 
     let isExistingSheet = false;
     let columnList = [];
@@ -630,7 +630,7 @@ function loadHome() {
 }
 
 function loadList() {
-  $('#list').load('../../list.html', () => {
+  $('#list').load('./list.html', () => {
 
     console.log(state.getSpreadsheet());
 
@@ -817,7 +817,7 @@ function loadList() {
 }
 
 function loadHowToUse() {
-  $('#how-to-use').load('../../how-to-use.html', () => {
+  $('#how-to-use').load('./how-to-use.html', () => {
 
   });
 }
@@ -972,7 +972,7 @@ function updateSignInStatus(isSignedIn) {
     pre.classList.add('display-none');
     gapi.client.load('drive', 'v3')
       .then(() => {
-        execute();
+        //execute();
       });
   } else {
     root.classList.add('display-none');
