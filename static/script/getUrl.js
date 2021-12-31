@@ -1,5 +1,3 @@
-const getUrl = window.location;
-const baseUrl = getUrl.protocol + "//" + getUrl.host + "/" + getUrl.pathname.split('/')[1];
+const baseUrl = window.location.href;
 
 console.log(baseUrl);
-console.dir(getUrl);

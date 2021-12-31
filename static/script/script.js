@@ -10,12 +10,6 @@ const regBeforeHyphen = /[^\-]*/;
 const regAfterHyphen = /[a-zA-Zà-úÀ-Ú0-9º \.]+$/g;
 const alphabetUp = 'abcdefghijklmnopqrstuvwxyz'.toUpperCase().split('');
 
-const getUrl = window.location;
-const baseUrl = getUrl.protocol + "//" + getUrl.host + "/" + getUrl.pathname.split('/')[1];
-
-console.log(baseUrl);
-console.log(getUrl);
-
 // https://developer.mozilla.org/pt-BR/docs/Glossary/IIFE
 const state = (() => {
   let spreadsheets = [];
@@ -120,7 +114,7 @@ function appendPre(message) {
 let menuBtnSignIn = undefined;
 let menuBtnSignOut = undefined;
 function loadMenu() {
-  $('#menu').load(`${baseUrl}/menu.html`, () => {
+  $('#menu').load(`${baseUrl}menu.html`, () => {
 
     const menuContainer = document.querySelector('.ui.menu.container');
     const mMenuBtnSignIn = document.getElementById('menu-btn-sign-in');
@@ -181,7 +175,7 @@ function loadMenu() {
 }
 
 function loadHome() {
-  $('#home').load(`${baseUrl}/home.html`, () => {
+  $('#home').load(`${baseUrl}home.html`, () => {
 
     let isExistingSheet = false;
     let columnList = [];
@@ -636,7 +630,7 @@ function loadHome() {
 }
 
 function loadList() {
-  $('#list').load(`${baseUrl}/list.html`, () => {
+  $('#list').load(`${baseUrl}list.html`, () => {
 
     console.log(state.getSpreadsheet());
 
@@ -823,7 +817,7 @@ function loadList() {
 }
 
 function loadHowToUse() {
-  $('#how-to-use').load(`${baseUrl}/how-to-use.html`, () => {
+  $('#how-to-use').load(`${baseUrl}how-to-use.html`, () => {
 
   });
 }
