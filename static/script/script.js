@@ -14,6 +14,7 @@ const getUrl = window.location;
 const baseUrl = getUrl.protocol + "//" + getUrl.host + "/" + getUrl.pathname.split('/')[1];
 
 console.log(baseUrl);
+console.log(getUrl);
 
 // https://developer.mozilla.org/pt-BR/docs/Glossary/IIFE
 const state = (() => {
