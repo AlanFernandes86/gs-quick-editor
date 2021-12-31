@@ -75,6 +75,14 @@ const state = (() => {
       tempObject = Object.assign({}, objects[id]);
       return tempObject;
     },
+    newTempObject: () => {
+      const columns = Object.keys(objects[0]);
+      const temp = {};
+      columns.forEach((title) => temp[title] = '');
+      tempObject = temp;
+      return tempObject;
+    }
+    ,
     updateTempObject: (key, value) => {
       tempObject[key] = value;
       return tempObject;
@@ -88,7 +96,7 @@ window.onload = () => {
   }
   loadMenu();
   loadGoogleApi();
-  
+
 }
 
 function appendPre(message) {
@@ -106,7 +114,7 @@ function appendPre(message) {
 let menuBtnSignIn = undefined;
 let menuBtnSignOut = undefined;
 function loadMenu() {
-  $('#menu').load('menu.html', () => {
+  $('#menu').load('../../menu.html', () => {
 
     const menuContainer = document.querySelector('.ui.menu.container');
     const mMenuBtnSignIn = document.getElementById('menu-btn-sign-in');
@@ -149,6 +157,7 @@ function loadMenu() {
           break;
         case 'menu-item-how-to-use':
           toggleRootChildrenDisplay(howToUse.id);
+          loadHowToUse();
           break;
       }
     }
@@ -166,7 +175,7 @@ function loadMenu() {
 }
 
 function loadHome() {
-  $('#home').load('home.html', () => {
+  $('#home').load('../../home.html', () => {
 
     let isExistingSheet = false;
     let columnList = [];
@@ -621,7 +630,7 @@ function loadHome() {
 }
 
 function loadList() {
-  $('#list').load('list.html', () => {
+  $('#list').load('../../list.html', () => {
 
     console.log(state.getSpreadsheet());
 
@@ -630,9 +639,15 @@ function loadList() {
     const menuBtnCancel = document.getElementById('menu-btn-cancel');
     const menuBtnSave = document.getElementById('menu-btn-save');
     const btnSave = document.getElementById('btn-save');
+    const btnAddNewRow = document.getElementById('btn-add-new-row');
+    
+    menuBtnCancel.classList.add('display-none');
+    menuBtnSave.classList.add('display-none');
+    menuBtnSignOut.classList.remove('display-none');
 
     menuBtnCancel.onclick = toggleFormOrList;
     btnSave.onclick = upsertRow;
+    btnAddNewRow.onclick = newRow;
 
     listRows();
 
@@ -641,7 +656,7 @@ function loadList() {
       getSpreadsheetRows(state.getSpreadsheet().spreadsheetId, state.getSpreadsheet().range)
         .then((result) => {
           console.log(result);
-          listNames(state.setSheetObjects(arrayToObject(result.values)));
+          listObjects(state.setSheetObjects(arrayToObject(result.values)));
           isLoading(false);
         })
         .catch((error) => {
@@ -656,15 +671,17 @@ function loadList() {
       rows.forEach((row, index, array) => {
         if (index === 0) return;
         const object = {}
-        row.forEach((value, i) => {
-          object[array[0][i]] = value;
-        })
+
+        for (let i = 0; i < array[0].length; i++) {
+          object[array[0][i]] = row[i] || '';
+        }
+
         rowsObject.push(object)
       });
       return rowsObject;
     }
 
-    function listNames(rowsObject) {
+    function listObjects(rowsObject) {
       const list = document.getElementById('list-data');
       list.innerHTML = ''
       rowsObject.forEach((value, index) => {
@@ -708,7 +725,7 @@ function loadList() {
       divItem.appendChild(btnContainer);
 
       const buttonShow = document.createElement('div');
-      buttonShow.classList.add('ui', 'button');
+      buttonShow.classList.add('ui', 'button', 'circular');
       buttonShow.id = `btn-${index}`;
       buttonShow.textContent = 'Mostrar dados';
       btnContainer.appendChild(buttonShow);
@@ -747,6 +764,7 @@ function loadList() {
     function updateValue(event) {
       // const index = event.target.id.match(rBeforeHyphen)[0];
       const key = event.target.id.match(regAfterHyphen)[0];
+      console.log(key);
       state.updateTempObject(key, event.target.value);
     }
 
@@ -754,6 +772,7 @@ function loadList() {
       menuBtnCancel.classList.toggle('display-none');
       menuBtnSave.classList.toggle('display-none');
       menuBtnSignOut.classList.toggle('display-none');
+      btnAddNewRow.classList.toggle('display-none');
 
       if (listData.classList.contains('display-none')) {
         listData.classList.remove('display-none');
@@ -772,17 +791,34 @@ function loadList() {
 
     async function upsertRow(event) {
       const id = +event.target.name;
-      let range = state.getSpreadsheet().range.split('');
-      console.log(range);
-      range = `A${+range[range.length - 3] + id + 1}`;
+      const regLastNumbers = /[0-9]+$/;
+      let range = state.getSpreadsheet().range.split(':')[0].match(regLastNumbers)[0];
+      range = `A${+range + (id + 1)}`;
       console.log(range);
       const response = await putSpreadsheetData(
         range,
         state.getSpreadsheet().spreadsheetId,
         Object.values(state.getTempObject())
       );
+      loadList();
       console.log(response);
     }
+
+    function newRow() {
+      const id = state.getSheetObjects().length;
+      btnSave.name = id;
+      Object.entries(state.newTempObject()).forEach((entry) => {
+        createInput(id, 'text', entry);
+      });
+      toggleFormOrList()
+    }
+
+  });
+}
+
+function loadHowToUse() {
+  $('#how-to-use').load('../../how-to-use.html', () => {
+
   });
 }
 
@@ -935,9 +971,9 @@ function updateSignInStatus(isSignedIn) {
     root.classList.remove('display-none');
     pre.classList.add('display-none');
     gapi.client.load('drive', 'v3')
-    .then(() => { 
-      execute();
-    });
+      .then(() => {
+        execute();
+      });
   } else {
     root.classList.add('display-none');
     appendPre('Você não está autenticado! Favor clicar no botão "Sign In" no menu superior.\n'
@@ -980,5 +1016,5 @@ function execute() {
         document.getElementById('img').src = response.result.webContentLink;
         console.log(response);
       });
-    },function (err) { console.error("Execute error", err); });
+    }, function (err) { console.error("Execute error", err); });
 }
