@@ -10,6 +10,8 @@ const regBeforeHyphen = /[^\-]*/;
 const regAfterHyphen = /[a-zA-Zà-úÀ-Ú0-9º \.]+$/g;
 const alphabetUp = 'abcdefghijklmnopqrstuvwxyz'.toUpperCase().split('');
 
+const baseUrl = window.location.href;
+
 // https://developer.mozilla.org/pt-BR/docs/Glossary/IIFE
 const state = (() => {
   let spreadsheets = [];
@@ -143,22 +145,25 @@ function loadMenu() {
     }
 
     function updateRoot(id) {
-      switch (id) {
-        case 'menu-item-home':
-          toggleRootChildrenDisplay(home.id);
-          loadHome();
-          break;
-        case 'menu-item-list-data':
-          toggleRootChildrenDisplay(list.id);
-          loadList();
-          break;
-        case 'menu-item-template':
-          toggleRootChildrenDisplay(template.id);
-          break;
-        case 'menu-item-how-to-use':
-          toggleRootChildrenDisplay(howToUse.id);
-          loadHowToUse();
-          break;
+      const isSignedIn = gapi.auth2.getAuthInstance().isSignedIn.get();
+      if (isSignedIn) {
+        switch (id) {
+          case 'menu-item-home':
+            toggleRootChildrenDisplay(home.id);
+            loadHome();
+            break;
+          case 'menu-item-list-data':
+            toggleRootChildrenDisplay(list.id);
+            loadList();
+            break;
+          case 'menu-item-template':
+            toggleRootChildrenDisplay(template.id);
+            break;
+          case 'menu-item-how-to-use':
+            toggleRootChildrenDisplay(howToUse.id);
+            loadHowToUse();
+            break;
+        }
       }
     }
 
@@ -640,7 +645,7 @@ function loadList() {
     const menuBtnSave = document.getElementById('menu-btn-save');
     const btnSave = document.getElementById('btn-save');
     const btnAddNewRow = document.getElementById('btn-add-new-row');
-    
+
     menuBtnCancel.classList.add('display-none');
     menuBtnSave.classList.add('display-none');
     menuBtnSignOut.classList.remove('display-none');
@@ -965,6 +970,7 @@ function initClient() {
 }
 
 function updateSignInStatus(isSignedIn) {
+  const menuContainer = document.querySelector('.ui.menu.container');
   toggleBtnSignInOrOut(isSignedIn);
   if (isSignedIn) {
     pre.innerHTML = '';
@@ -975,7 +981,7 @@ function updateSignInStatus(isSignedIn) {
         //execute();
       });
   } else {
-    root.classList.add('display-none');
+    //root.classList.add('display-none');
     appendPre('Você não está autenticado! Favor clicar no botão "Sign In" no menu superior.\n'
       + 'Importante desabilitar o bloqueador de popup.');
   }
