@@ -87,3 +87,7 @@ footer {
 #segment-2 {
   flex-direction: column;
 }
+
+#error {
+  font-size: 1.1rem;
+}
