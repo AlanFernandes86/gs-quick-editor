@@ -111,21 +111,14 @@ function errorMessage(message) {
   if (this.readyState === 'complete') this.onload();
 } */
 
-let menuBtnSignIn = undefined;
-let menuBtnSignOut = undefined;
+
 function loadMenu() {
   $('#menu').load(`${baseUrl}menu.html`, () => {
 
     const menuContainer = document.querySelector('.ui.menu.container');
-    const mMenuBtnSignIn = document.getElementById('menu-btn-sign-in');
-    const mMenuBtnSignOut = document.getElementById('menu-btn-sign-out');
-
-    menuBtnSignIn = mMenuBtnSignIn;
-    menuBtnSignOut = mMenuBtnSignOut;
-
-    mMenuBtnSignIn.onclick = handleSignInClick;
-    mMenuBtnSignOut.onclick = handleSignOutClick;
-    menuContainer.onclick = toggleMenuItem;
+    
+    
+   menuContainer.onclick = toggleMenuItem;
 
     function toggleMenuItem(event) {
       const id = event.target.id;
