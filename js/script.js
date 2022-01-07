@@ -16,8 +16,8 @@ const baseUrl = window.location.href;
 const state = (() => {
   let spreadsheets = [];
   let spreadsheet = {};
-  let objects = [];
-  let tempObject = {};
+  let sheetRows = [];
+  let row = {};
 
   return {
     getSpreadsheetsList: () => spreadsheets,
@@ -67,27 +67,27 @@ const state = (() => {
         spreadsheets.splice(index, 1);
       }
     },
-    getSheetObjects: () => objects,
+    getSheetObjects: () => sheetRows,
     setSheetObjects: (value) => {
-      objects = value;
-      return objects;
+      sheetRows = value;
+      return sheetRows;
     },
-    getTempObject: () => tempObject,
+    getTempObject: () => row,
     setTempObject: (id) => {
-      tempObject = Object.assign({}, objects[id]);
-      return tempObject;
+      row = Object.assign({}, sheetRows[id]);
+      return row;
     },
     newTempObject: () => {
       const columns = spreadsheet.values[0];
       const temp = {};
       columns.forEach((title) => temp[title] = '');
-      tempObject = temp;
-      return tempObject;
+      row = temp;
+      return row;
     }
     ,
     updateTempObject: (key, value) => {
-      tempObject[key] = value;
-      return tempObject;
+      row[key] = value;
+      return row;
     }
   }
 })();
@@ -114,7 +114,7 @@ function errorMessage(message) {
 let menuBtnSignIn = undefined;
 let menuBtnSignOut = undefined;
 function loadMenu() {
-  $('#menu').load(`${baseUrl}menu.html`, () => {
+  $('#menu').load(`${baseUrl}pages/menu.html`, () => {
 
     const menuContainer = document.querySelector('.ui.menu.container');
     const mMenuBtnSignIn = document.getElementById('menu-btn-sign-in');
@@ -129,8 +129,9 @@ function loadMenu() {
 
     function toggleMenuItem(event) {
       const id = event.target.id;
+      route(event);
       activeMenuItem(id);
-      updateRoot(id);
+      //updateRoot(id);
     }
 
     function activeMenuItem(id) {
@@ -178,12 +179,11 @@ function loadMenu() {
 }
 
 function loadHome() {
-  $('#home').load(`${baseUrl}home.html`, () => {
+  $('#home').load(`${baseUrl}pages/home.html`, () => {
 
     let isExistingSheet = false;
     let columnList = [];
-    let columnIndex = 0;
-
+    
     const inputNewSheetTitle = document.getElementById('new-sheet-title');
     inputNewSheetTitle.oninput = (event) => state.getSpreadsheet().title = event.target.value;
 
@@ -225,6 +225,12 @@ function loadHome() {
     }
 
     handleHome();
+    function handleHome() {
+      if (state.getActiveSpreadsheet()) {
+        loadSpreadsheetsTable();
+        toggleSteps(0, 4);
+      };
+    }
 
     homeSteps.forEach((step, index) => {
       setActions(index);
@@ -241,12 +247,6 @@ function loadHome() {
       step.onclick = bottomStepsToggle;
     })
 
-    function handleHome() {
-      if (state.getActiveSpreadsheet()) {
-        loadSpreadsheetsTable();
-        toggleSteps(0, 4);
-      };
-    }
 
     function bottomStepsToggle(event) {
       const segments = document.querySelectorAll('.ui.attached.segment');
@@ -341,7 +341,9 @@ function loadHome() {
       input.parentElement.appendChild(div);
     }
 
+    let columnIndex = 0;
     function insertColumnTitle() {
+
       const item = document.createElement('div');
       item.classList.add('item');
 
@@ -521,7 +523,7 @@ function loadHome() {
           putSpreadsheetData('A1', state.getSpreadsheet().spreadsheetId, state.getSpreadsheet().values[0])
             .then((result) => {
               state.getSpreadsheet().values = result.updatedData.values;
-
+              
               state.getSpreadsheet().range = result.updatedData.range.replace(/[0-9]$/, '');
 
               insertLocalSheet();
@@ -633,7 +635,7 @@ function loadHome() {
 }
 
 function loadList() {
-  $('#list').load(`${baseUrl}list.html`, () => {
+  $('#list').load(`${baseUrl}pages/list.html`, () => {
 
     const listData = document.getElementById('list-data');
     const formData = document.getElementById('form-data');
@@ -811,7 +813,7 @@ function loadList() {
 }
 
 function loadHowToUse() {
-  $('#how-to-use').load(`${baseUrl}how-to-use.html`, () => {
+  $('#how-to-use').load(`${baseUrl}pages/how-to-use.html`, () => {
 
   });
 }
