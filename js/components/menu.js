@@ -1,11 +1,13 @@
+import { loadHome } from './home.js';
+import { loadList } from './list.js';
+
 export const loadMenu = async (url) => {
 
   return fetch(`${url}pages/menu.html`)
     .then((data) => data.text())
     .then((text) => {
+      
       document.getElementById('menu').innerHTML = text;
-
-      console.log('load menu');
 
       const menuContainer = document.querySelector('.ui.menu.container');
 
@@ -31,12 +33,12 @@ export const loadMenu = async (url) => {
         if (isSignedIn) {
           switch (id) {
             case 'menu-item-home':
-              toggleRootChildrenDisplay(home.id);
-              loadHome();
+              //toggleRootChildrenDisplay(home.id);
+              loadHome(url);
               break;
             case 'menu-item-list-data':
-              toggleRootChildrenDisplay(list.id);
-              loadList();
+              //toggleRootChildrenDisplay(list.id);
+              loadList(url);
               break;
             case 'menu-item-template':
               toggleRootChildrenDisplay(template.id);

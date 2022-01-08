@@ -5,14 +5,14 @@ export class Spreadsheet {
     url = '',
     range = '',
     columns = [],
-    status = false,
+    active = false,
   ) {
     this.id = id;
     this.title = title;
     this.url = url;
     this.range = range;
     this.columns = columns;
-    this.status = status;
+    this.active = active;
   }
 
   clearSpreadsheet() {

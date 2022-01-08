@@ -6,21 +6,20 @@ export class State {
   }
 
   getSpreadsheetsList() {
-    return spreadsheetList;
+    return this.spreadsheetList;
   }
 
   getActiveSpreadsheet() {
-    const temp = spreadsheetList.find((spreadsheet) => spreadsheet.status) || {};
-    return spreadsheet;
+    return this.spreadsheetList.find((spreadsheet) => spreadsheet.active) || {};
   }
 
   setSpreadsheetsList(value) {
-    spreadsheets = value;
-    return spreadsheets;
+    this.spreadsheets = value;
+    return this.spreadsheets;
   }
 
   deactivateAllSpreadsheets() {
-    spreadsheets.forEach((spreadsheet) => spreadsheet.active = false);
+    this.spreadsheets.forEach((spreadsheet) => spreadsheet.active = false);
   }
 }
 
