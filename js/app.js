@@ -4,8 +4,8 @@ import { googleApi } from './components/google-functions.js';
 const baseUrl = window.location.href;
 
 const app = async () => {
+  console.log('ahaahha');
   await loadMenu(baseUrl);
-
   const google = await googleApi();
   google.loadGoogleApi();
 

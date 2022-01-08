@@ -6,7 +6,7 @@ export const loadMenu = async (url) => {
   return fetch(`${url}pages/menu.html`)
     .then((data) => data.text())
     .then((text) => {
-      
+      console.log('menu');
       document.getElementById('menu').innerHTML = text;
 
       const menuContainer = document.querySelector('.ui.menu.container');

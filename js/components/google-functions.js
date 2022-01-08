@@ -72,6 +72,7 @@ export const googleApi = async () => {
   return {
 
     loadGoogleApi: () => {
+      console.log("here");
       gapi.load('client:auth2', initClient);
     },
     // Make sure the client is loaded and sign-in is complete before calling this method.
