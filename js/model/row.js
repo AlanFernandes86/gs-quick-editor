@@ -6,11 +6,11 @@ export class Row {
   /**
    * @param {string | number} key
    */
-  set cell(key, value) {
+  setCell(key, value) {
     this[key] = value;
   }
 
-  get cell(key) {
+  getCell(key) {
     return this[key];
   }
 

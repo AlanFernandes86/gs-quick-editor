@@ -1,13 +1,16 @@
 import { loadHome } from './home.js';
 import { loadList } from './list.js';
 
-export const loadMenu = async (url) => {
+export const loadMenu = async () => {
 
-  return fetch(`${url}pages/menu.html`)
+  return fetch(`${baseUrl}pages/menu.html`)
     .then((data) => data.text())
     .then((text) => {
       console.log('menu');
       document.getElementById('menu').innerHTML = text;
+
+      window.menuBtnSignIn = document.getElementById('menu-btn-sign-in');
+      window.menuBtnSignOut = document.getElementById('menu-btn-sign-out');
 
       const menuContainer = document.querySelector('.ui.menu.container');
 
@@ -33,20 +36,20 @@ export const loadMenu = async (url) => {
         if (isSignedIn) {
           switch (id) {
             case 'menu-item-home':
-              loadHome(url);
+              loadHome();
               break;
             case 'menu-item-list-data':
-              loadList(url);
+              loadList();
               break;
             case 'menu-item-template':
-              
+
               break;
             case 'menu-item-how-to-use':
               loadHowToUse();
               break;
           }
         }
-      }     
+      }
       // mediaQueries.topMenu();
     });
 

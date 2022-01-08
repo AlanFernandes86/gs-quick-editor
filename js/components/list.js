@@ -1,6 +1,8 @@
-export const loadList = async (url) => {
+import { Row } from '../model/row.js';
+
+export const loadList = async () => {
  
-    return fetch(`${url}pages/list.html`)
+    return fetch(`${baseUrl}pages/list.html`)
     .then((data) => data.text())
     .then((text) => {
 
@@ -25,9 +27,9 @@ export const loadList = async (url) => {
   
       async function listRows() {
         isLoading(true);
-        getSpreadsheetRows(state.getSpreadsheet().spreadsheetId, state.getSpreadsheet().range)
+        google.getSpreadsheetRows(state.tempSpreadsheet.id, state.tempSpreadsheet.range)
           .then((result) => {
-            listObjects(state.setSheetObjects(arrayToObject(result.values)));
+            createListRowsUI(state.sheetRows = arrayToRows(result.values));
             isLoading(false);
           })
           .catch((error) => {
@@ -36,37 +38,38 @@ export const loadList = async (url) => {
           })
       }
   
-      function arrayToObject(rows) {
+      function arrayToRows(arrayRows) {
         const rowsObject = [];
   
-        rows.forEach((row, index, array) => {
+        arrayRows.forEach((arrayRow, index, array) => {
           if (index === 0) return;
-          const object = {}
+          const row = new Row();
   
           for (let i = 0; i < array[0].length; i++) {
-            object[array[0][i]] = row[i] || '';
+            row.setCell([array[0][i]], arrayRow[i] || '');
           }
-  
-          rowsObject.push(object)
+          
+          rowsObject.push(row)
         });
+      
         return rowsObject;
       }
   
-      function listObjects(rowsObject) {
+      function createListRowsUI(sheetRows) {
         const list = document.getElementById('list-data');
         list.innerHTML = ''
-        rowsObject.forEach((value, index) => {
+        sheetRows.forEach((row, index) => {
           const divItem = document.createElement('div');
           divItem.classList.add('item');
           list.appendChild(divItem);
           addBtnShow(divItem, index);
-          addCheckbox(divItem, value, index);
+          addCheckbox(divItem, row, index);
         });
   
         $('.ui.checkbox').checkbox();
       }
   
-      function addCheckbox(divItem, value, index) {
+      function addCheckbox(divItem, row, index) {
         const divCheckbox = document.createElement('div');
         divCheckbox.classList.add('content');
         divItem.appendChild(divCheckbox);
@@ -82,7 +85,7 @@ export const loadList = async (url) => {
         checkboxContainer.appendChild(checkbox);
   
         const label = document.createElement('label');
-        label.textContent = value[state.getSpreadsheet().mainColumn];
+        label.textContent = row[state.tempSpreadsheet.mainColumn];
         label.classList.add('header');
         checkboxContainer.appendChild(label);
       }
@@ -110,31 +113,7 @@ export const loadList = async (url) => {
         toggleFormOrList();
   
       }
-  
-      function createInput(objId, type, entries) {
-        const field = document.createElement('div');
-        field.className = 'field';
-        const input = document.createElement('input');
-        input.id = `${objId}-${entries[0]}`;
-        input.type = type;
-        input.value = entries[1];
-        const label = document.createElement('label');
-        label.htmlFor = input.id;
-        label.textContent = entries[0];
-  
-        input.oninput = updateValue;
-  
-        field.appendChild(label);
-        field.appendChild(input);
-        formData.appendChild(field);
-      }
-  
-      function updateValue(event) {
-        // const index = event.target.id.match(rBeforeHyphen)[0];
-        const key = event.target.id.match(regAfterHyphen)[0];
-        state.updateTempObject(key, event.target.value);
-      }
-  
+        
       function toggleFormOrList() {
         menuBtnCancel.classList.toggle('display-none');
         menuBtnSave.classList.toggle('display-none');
@@ -159,24 +138,50 @@ export const loadList = async (url) => {
       async function upsertRow(event) {
         const id = +event.target.name;
         const regLastNumbers = /[0-9]+$/;
-        let range = state.getSpreadsheet().range.split(':')[0].match(regLastNumbers)[0];
+        let range = state.tempSpreadsheet.range.split(':')[0].match(regLastNumbers)[0];
         range = `A${+range + (id + 1)}`;
-        const response = await putSpreadsheetData(
+        const response = await google.putSpreadsheetData(
           range,
-          state.getSpreadsheet().spreadsheetId,
-          Object.values(state.getTempObject())
+          state.tempSpreadsheet.id,
+          Object.values(state.row)
         );
         loadList();
       }
   
       function newRow() {
-        const id = state.getSheetObjects().length;
+        const id = state.sheetRows.length;
         btnSave.name = id;
-        Object.entries(state.newTempObject()).forEach((entry) => {
+        Object.entries(state.newRow()).forEach((entry) => {
           createInput(id, 'text', entry);
         });
         toggleFormOrList()
       }
+
+      function createInput(objId, type, entries) {
+        const field = document.createElement('div');
+        field.className = 'field';
+        const input = document.createElement('input');
+        input.id = `${objId}-${entries[0]}`;
+        input.type = type;
+        input.value = entries[1];
+        const label = document.createElement('label');
+        label.htmlFor = input.id;
+        label.textContent = entries[0];
+  
+        input.oninput = updateValue;
+  
+        field.appendChild(label);
+        field.appendChild(input);
+        formData.appendChild(field);
+      }  
+
+      function updateValue(event) {
+        // const index = event.target.id.match(rBeforeHyphen)[0];
+        const key = event.target.id.match(regAfterHyphen)[0];
+        state.updateRow(key, event.target.value);
+      }
+
     });
+
 
 }

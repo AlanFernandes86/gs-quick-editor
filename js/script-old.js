@@ -839,7 +839,3 @@ function disableFixedMenu() {
     })
 } */
 
-function isLoading(enabled) {
-  const loading = document.getElementById('loading');
-  enabled ? loading.classList.remove('display-none') : loading.classList.add('display-none');
-}

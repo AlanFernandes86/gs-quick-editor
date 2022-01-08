@@ -5,6 +5,7 @@ export class Spreadsheet {
     url = '',
     range = '',
     columns = [],
+    mainColumn = '',
     active = false,
   ) {
     this.id = id;
@@ -12,14 +13,19 @@ export class Spreadsheet {
     this.url = url;
     this.range = range;
     this.columns = columns;
+    this.mainColumn = mainColumn;
     this.active = active;
   }
 
-  clearSpreadsheet() {
-    this = new Spreadsheet();
+  clear() {
+    this.id = '';
+    this.title = '';
+    this.url = '';
+    this.range = '';
+    this.columns = [];
+    this.mainColumn = '';
+    this.active = false;
   };
-
   
-
-
 }
+

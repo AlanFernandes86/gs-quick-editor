@@ -1,8 +1,9 @@
-export const loadHome = async (url) => {
+export const loadHome = async () => {
 
-  return fetch(`${url}pages/home.html`)
+  return fetch(`${baseUrl}pages/home.html`)
     .then((data) => data.text())
     .then((text) => {
+      console.log('home');
 
       rootContent.innerHTML = text;
 
@@ -13,7 +14,7 @@ export const loadHome = async (url) => {
       let columnIndex = 0;
 
       const inputNewSheetTitle = document.getElementById('new-sheet-title');
-      inputNewSheetTitle.oninput = (event) => state.getSpreadsheet().title = event.target.value;
+      inputNewSheetTitle.oninput = (event) => state.tempSpreadsheet.title = event.target.value;
 
       const inputNewColumnTitle = document.getElementById('new-column-title');
       inputNewColumnTitle.onkeyup = (event) => {
@@ -54,6 +55,17 @@ export const loadHome = async (url) => {
 
       handleHome();
 
+      function handleHome() {
+        if (state.getActiveSpreadsheet().active) {
+          loadSpreadsheetsTable();
+          toggleSteps(0, 4);
+        } else if (state.spreadsheetList.length > 0) {
+          loadSpreadsheetsTable();
+          document.getElementById(`step-3`).classList.add('active');
+          setDisabledBottomStep(3, true);
+        }
+      }
+
       homeSteps.forEach((step, index) => {
         setActions(index);
       })
@@ -69,12 +81,6 @@ export const loadHome = async (url) => {
         step.onclick = bottomStepsToggle;
       })
 
-      function handleHome() {
-        if (state.getActiveSpreadsheet()) {
-          loadSpreadsheetsTable();
-          toggleSteps(0, 4);
-        };
-      }
 
       function bottomStepsToggle(event) {
         const segments = document.querySelectorAll('.ui.attached.segment');
@@ -91,12 +97,6 @@ export const loadHome = async (url) => {
         toggleSteps(from, to);
       }
 
-
-      function reloadHome() {
-        home.innerHTML = '';
-        loadHome();
-      }
-
       function toggleSteps(from, to) {
         if (to === 4) {
           checkIcon.classList.add('green');
@@ -107,8 +107,8 @@ export const loadHome = async (url) => {
         }
         if (to === 0) {
           state.deactivateAllSpreadsheets();
-          state.clearSpreadsheet();
-          reloadHome();
+          state.tempSpreadsheet.clear();
+          loadHome();
         } else {
           homeSteps[from].element.classList.add('display-none');
           homeSteps[to].element.classList.remove('display-none');
@@ -229,7 +229,7 @@ export const loadHome = async (url) => {
       }
 
       function saveColumnsAndGo() {
-        state.getSpreadsheet().values = [columnList.map((column) => column.title)];
+        state.tempSpreadsheet.columns = columnList.map((column) => column.title);
         setSelectedColumnOptions();
         toggleSteps(...navigation.createSheetToMainColumn);
       }
@@ -237,11 +237,11 @@ export const loadHome = async (url) => {
       function setSelectedColumnOptions() {
         selectColumns.innerHTML = '<option value="">Colunas</option>';
         $('.ui.dropdown').dropdown();
-        const values = state.getSpreadsheet().values[0];
-        values.forEach((value) => {
+        const columns = state.tempSpreadsheet.columns;
+        columns.forEach((column) => {
           const option = document.createElement('option');
-          option.value = value;
-          option.textContent = value;
+          option.value = column;
+          option.textContent = column;
           selectColumns.appendChild(option);
         });
       }
@@ -256,7 +256,7 @@ export const loadHome = async (url) => {
             : btn3One.classList.remove('display-none');
           btn3Zero.classList.add('disabled');
           warningContainer.classList.add('display-none');
-          state.getSpreadsheet().mainColumn = selectColumns.value;
+          state.tempSpreadsheet.mainColumn = selectColumns.value;
         } else {
           warningContainer.classList.remove('display-none');
         }
@@ -272,12 +272,12 @@ export const loadHome = async (url) => {
         if (url[0] === 'https:' && url[2] === 'docs.google.com' && url[3] === 'spreadsheets') {
           const spreadsheetId = url[5];
           event.target.classList.add('loading');
-          getSpreadsheet(spreadsheetId).then((response) => {
+          google.getSpreadsheet(spreadsheetId).then((response) => {
             if (response.status === 200) {
               insertLeftCornerLabel(input, 'check', 'green', 'enabled');
-              state.getSpreadsheet().title = response.result.properties.title;
-              state.getSpreadsheet().spreadsheetUrl = response.result.spreadsheetUrl;
-              state.getSpreadsheet().spreadsheetId = response.result.spreadsheetId;
+              state.tempSpreadsheet.title = response.result.properties.title;
+              state.tempSpreadsheet.url = response.result.spreadsheetUrl;
+              state.tempSpreadsheet.id = response.result.spreadsheetId;
               loadIndexRowsSelect(response.result.sheets[0].data[0].rowData);
             }
             event.target.classList.remove('loading');
@@ -314,8 +314,8 @@ export const loadHome = async (url) => {
           rowData[select.value].values.forEach((value, index) => {
             value.formattedValue ? values.push(value.formattedValue) : values.push('');
           });
-          state.getSpreadsheet().values = [values];
-          state.getSpreadsheet().range = findRange(+select.value + 1, values.length);
+          state.tempSpreadsheet.columns = values;
+          state.tempSpreadsheet.range = findRange(+select.value + 1, values.length);
           setSelectedColumnOptions();
           toggleSteps(...navigation.existingSheetToMainColumn);
         };
@@ -342,16 +342,16 @@ export const loadHome = async (url) => {
 
       function createSpreadsheet(event) {
         event.target.classList.add('loading');
-        createSheet(state.getSpreadsheet().title)
+        google.createSheet(state.tempSpreadsheet.title)
           .then((result) => {
-            state.getSpreadsheet().spreadsheetId = result.spreadsheetId;
-            state.getSpreadsheet().spreadsheetUrl = result.spreadsheetUrl;
+            state.tempSpreadsheet.id = result.spreadsheetId;
+            state.tempSpreadsheet.url = result.spreadsheetUrl;
 
-            putSpreadsheetData('A1', state.getSpreadsheet().spreadsheetId, state.getSpreadsheet().values[0])
+            google.putSpreadsheetData('A1', state.tempSpreadsheet.id, state.tempSpreadsheet.columns)
               .then((result) => {
-                state.getSpreadsheet().values = result.updatedData.values;
+                //state.tempSpreadsheet.columns = result.updatedData.values;
 
-                state.getSpreadsheet().range = result.updatedData.range.replace(/[0-9]$/, '');
+                state.tempSpreadsheet.range = result.updatedData.range.replace(/[0-9]$/, '');
 
                 insertLocalSheet();
                 loadSpreadsheetsTable();
@@ -371,28 +371,21 @@ export const loadHome = async (url) => {
 
       function insertLocalSheet() {
         state.addSpreadsheetInSpreadsheetList();
-        updateLocalStorage();
       }
 
       function removeLocalSheet(index) {
         state.removeSpreadsheetOfSpreadsheetList(index);
-        updateLocalStorage();
-        reloadHome();
+        loadHome();
       }
 
       function selectSpreadsheet(index) {
         state.setActiveSpreadsheet(index);
-        updateLocalStorage();
-        reloadHome();
-      }
-
-      function updateLocalStorage() {
-        localStorage.setItem('spreadsheets', JSON.stringify(state.getSpreadsheetsList()));
+        loadHome();
       }
 
       function loadSpreadsheetsTable() {
         const tbody = document.getElementById('tbody-data');
-        state.getSpreadsheetsList().forEach((spreadsheet, index) => {
+        state.spreadsheetList.forEach((spreadsheet, index) => {
 
           const tr = document.createElement('tr');
 
@@ -421,12 +414,12 @@ export const loadHome = async (url) => {
           i2.classList.add('file', 'alternate', 'icon');
           td2.appendChild(i2);
 
-          const nodeTextContent = document.createTextNode(spreadsheet.spreadsheet.title);
+          const nodeTextContent = document.createTextNode(spreadsheet.title);
           td2.appendChild(nodeTextContent);
 
           const td3 = document.createElement('td');
           td3.classList.add('spreadsheetUrl');
-          td3.textContent = spreadsheet.spreadsheet.spreadsheetUrl;
+          td3.textContent = spreadsheet.url;
           tr.appendChild(td3);
 
           const td4 = document.createElement('td');

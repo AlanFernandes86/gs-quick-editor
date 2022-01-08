@@ -1,16 +1,7 @@
 export const googleApi = async () => {
   console.log('google functions');
 
-  const menuBtnSignIn = document.getElementById('menu-btn-sign-in');
-  const menuBtnSignOut = document.getElementById('menu-btn-sign-out');
-
-  const errorMessage = (message) => {
-    error.classList.remove('display-none');
-    error.innerHTML = '';
-    error.textContent = message;
-  }
-
-  const initClient = () => {
+    const initClient = () => {
     const API_KEY = 'AIzaSyCFZjHEVeI9QgwCARRcEzW5pdJ_GGyvCGQ';
     const DISCOVERY_DOCS = ['https://sheets.googleapis.com/$discovery/rest?version=v4'];
     const SCOPES = 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive';
@@ -72,7 +63,6 @@ export const googleApi = async () => {
   return {
 
     loadGoogleApi: () => {
-      console.log("here");
       gapi.load('client:auth2', initClient);
     },
     // Make sure the client is loaded and sign-in is complete before calling this method.
