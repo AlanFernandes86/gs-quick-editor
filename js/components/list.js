@@ -107,7 +107,7 @@ export const loadList = async () => {
       function showData(event) {
         const id = event.target.id.match(regNumbers)[0];
         btnSave.name = id;
-        Object.entries(state.setTempObject(id)).forEach((item) => {
+        Object.entries(state.setRow(id)).forEach((item) => {
           createInput(id, 'text', item);
         });
         toggleFormOrList();
