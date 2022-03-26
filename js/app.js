@@ -1,10 +1,11 @@
 import { loadMenu } from './components/menu.js';
 import { state } from './state/state.js';
-import { sheets } from './components/google-functions.js';
+import { sheets } from './google-functions.js';
 import { loadHome } from './components/home.js'
+import { handleLocation } from './router.js';
 // import { topMenu }
 
-window.baseUrl = window.location.href;
+window.baseUrl = window.location.origin;
 window.regNumbers = /[0-9]+/g;
 window.regBeforeHyphen = /[^\-]*/;
 window.regAfterHyphen = /[a-zA-Zà-úÀ-Ú0-9º \.]+$/g;
@@ -63,10 +64,10 @@ const updateSignInStatus = async (isSigned) => {
   window.isSignedIn = isSigned;
   console.log(isSigned);
   if (isSigned) {
-    await loadHome();
     error.innerHTML = '';
     root.classList.remove('display-none');
     error.classList.add('display-none');
+    handleLocation();
     gapi.client.load('drive', 'v3')
       .then(() => {
         //execute();

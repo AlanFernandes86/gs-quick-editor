@@ -2,7 +2,7 @@ import { Row } from '../model/row.js';
 
 export const loadList = async () => {
  
-    return fetch(`${baseUrl}pages/list.html`)
+    return fetch(`${baseUrl}/pages/list.html`)
     .then((data) => data.text())
     .then((text) => {
 

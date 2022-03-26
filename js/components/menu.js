@@ -1,12 +1,12 @@
+import { handleLocation } from '../router.js';
 import { loadHome } from './home.js';
 import { loadList } from './list.js';
 
 export const loadMenu = async () => {
-
-  return fetch(`${baseUrl}pages/menu.html`)
+  const URL = `${baseUrl}/pages/menu.html`;
+  return fetch(URL)
     .then((data) => data.text())
     .then((text) => {
-      console.log('menu');
       document.getElementById('menu').innerHTML = text;
 
       window.menuBtnSignIn = document.getElementById('menu-btn-sign-in');
@@ -16,10 +16,13 @@ export const loadMenu = async () => {
 
       menuContainer.onclick = toggleMenuItem;
 
-      function toggleMenuItem(event) {
-        const id = event.target.id;
-        activeMenuItem(id);
-        updateRoot(id);
+      function toggleMenuItem({ target }) {
+        const id = target.id;
+        if (target.localName === 'a'){
+          activeMenuItem(id);
+          // updateRoot(id);
+          handleLocation();
+        };
       }
 
       function activeMenuItem(id) {
