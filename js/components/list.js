@@ -27,7 +27,7 @@ export const loadList = async () => {
   
       async function listRows() {
         isLoading(true);
-        google.getSpreadsheetRows(state.tempSpreadsheet.id, state.tempSpreadsheet.range)
+        sheets.getSpreadsheetRows(state.tempSpreadsheet.id, state.tempSpreadsheet.range)
           .then((result) => {
             createListRowsUI(state.sheetRows = arrayToRows(result.values));
             isLoading(false);
@@ -140,7 +140,7 @@ export const loadList = async () => {
         const regLastNumbers = /[0-9]+$/;
         let range = state.tempSpreadsheet.range.split(':')[0].match(regLastNumbers)[0];
         range = `A${+range + (id + 1)}`;
-        const response = await google.putSpreadsheetData(
+        const response = await sheets.putSpreadsheetData(
           range,
           state.tempSpreadsheet.id,
           Object.values(state.row)
