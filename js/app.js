@@ -2,6 +2,7 @@ import { loadMenu } from './components/menu.js';
 import { state } from './state/state.js';
 import { sheets } from './components/google-functions.js';
 import { loadHome } from './components/home.js'
+// import { topMenu }
 
 window.baseUrl = window.location.href;
 window.regNumbers = /[0-9]+/g;
