@@ -1,6 +1,6 @@
 export const loadHome = async () => {
 
-  return fetch(`${baseUrl}/pages/home.html`)
+  return fetch(`${baseUrl}pages/home.html`)
     .then((data) => data.text())
     .then((text) => {
       console.log('home');

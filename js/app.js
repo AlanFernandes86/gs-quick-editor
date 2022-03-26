@@ -5,8 +5,7 @@ import { loadHome } from './components/home.js'
 import { handleLocation } from './router.js';
 // import { topMenu }
 
-window.baseUrl = window.location.origin;
-console.log(window.location);
+window.baseUrl = `${window.location.origin}${window.location.pathname}`;
 window.regNumbers = /[0-9]+/g;
 window.regBeforeHyphen = /[^\-]*/;
 window.regAfterHyphen = /[a-zA-Zà-úÀ-Ú0-9º \.]+$/g;

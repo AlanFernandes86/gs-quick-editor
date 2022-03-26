@@ -3,7 +3,7 @@ import { loadHome } from './home.js';
 import { loadList } from './list.js';
 
 export const loadMenu = async () => {
-  const URL = `${baseUrl}/pages/menu.html`;
+  const URL = `${baseUrl}pages/menu.html`;
   return fetch(URL)
     .then((data) => data.text())
     .then((text) => {
