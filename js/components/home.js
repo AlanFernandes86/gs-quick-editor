@@ -4,7 +4,8 @@ export const loadHome = async () => {
     .then((data) => data.text())
     .then((text) => {
       console.log('home');
-
+      console.log(sheets);
+      
       rootContent.innerHTML = text;
 
       const alphabetUp = 'abcdefghijklmnopqrstuvwxyz'.toUpperCase().split('');
@@ -272,7 +273,7 @@ export const loadHome = async () => {
         if (url[0] === 'https:' && url[2] === 'docs.google.com' && url[3] === 'spreadsheets') {
           const spreadsheetId = url[5];
           event.target.classList.add('loading');
-          google.getSpreadsheet(spreadsheetId).then((response) => {
+          sheets.getSpreadsheet(spreadsheetId).then((response) => {
             if (response.status === 200) {
               insertLeftCornerLabel(input, 'check', 'green', 'enabled');
               state.tempSpreadsheet.title = response.result.properties.title;
@@ -342,12 +343,12 @@ export const loadHome = async () => {
 
       function createSpreadsheet(event) {
         event.target.classList.add('loading');
-        google.createSheet(state.tempSpreadsheet.title)
+        sheets.createSheet(state.tempSpreadsheet.title)
           .then((result) => {
             state.tempSpreadsheet.id = result.spreadsheetId;
             state.tempSpreadsheet.url = result.spreadsheetUrl;
 
-            google.putSpreadsheetData('A1', state.tempSpreadsheet.id, state.tempSpreadsheet.columns)
+            sheets.putSpreadsheetData('A1', state.tempSpreadsheet.id, state.tempSpreadsheet.columns)
               .then((result) => {
                 //state.tempSpreadsheet.columns = result.updatedData.values;
 

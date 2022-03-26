@@ -94,6 +94,11 @@ export class State {
     return this._sheetRows;
   }
 
+  setRow(index) {
+    this._row = this._sheetRows[index];
+    return this._row;
+  }
+
   newRow() {
     const columns = this._tempSpreadsheet.columns;
 
