@@ -1,28 +1,30 @@
+import { loadHome } from "./components/home.js";
+import { loadList } from "./components/list.js";
 
-// https://developer.mozilla.org/pt-BR/docs/Web/API/Window/popstate_event
-// https://developer.mozilla.org/pt-BR/docs/Web/API/EventTarget/dispatchEvent
-// https://developer.mozilla.org/pt-BR/docs/Web/API/Window/DOMContentLoaded_event
-// https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent/CustomEvent
-// https://developer.mozilla.org/en-US/docs/Web/API/History/pushState
+const root = document.getElementById('root');
 
-export class Router {
+export const route = (event) => {
+  event = event || window.event;
+  event.preventDefault();
+  window.history.pushState({}, "", event.target.href);
+  console.log(window.location.hash);
+  handleLocation();
+};
 
-    constructor(routes) {
-        this.routes = routes;
-    }
-    
-    route(event) {
-        event = event || window.event;
-        event.preventDefault();
-        window.history.pushState({}, '', event.target.href);
-        this.handleLocation();
-    }
+const routes = {
+  404: () => {},
+  '': loadHome,
+  '#listar-dados': loadList,
+  '#template': () => {},
+  '#modo-de-usar': () => {},
+};
 
-    handleLocation(event) {
-        // const path = window.location.pathname;
-        // const route = this.routes[path] || this.routes[404];
-        // const html = fetch(route).then((data) => data.text());
-        console.log("aiaiai");
-    }
+export const handleLocation = () => {
+  const path = window.location.hash;
+  console.log(path);
+  const route = routes[path] || routes[404];
+  route.call();
+};
 
-}
+
+window.onpopstate = handleLocation;
